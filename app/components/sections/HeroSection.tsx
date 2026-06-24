@@ -312,13 +312,21 @@ export function HeroSection({
           transitionDelay: loaded ? '0s' : '0.2s',
         }}
       >
-        <div className="flex min-h-0 flex-1 flex-col justify-start overflow-hidden px-6 sm:px-8 lg:px-10 pt-[calc(var(--wb-header-height)+1rem)] md:pt-[calc(var(--wb-header-height)+1.25rem)] pb-2 min-w-0">
+        <span
+          className="pointer-events-none absolute right-6 top-[calc(var(--wb-header-height)+0.5rem)] select-none text-[clamp(2.5rem,7vw,4rem)] font-normal leading-none text-[color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] sm:right-8 lg:right-10"
+          style={{ fontFamily: 'var(--wb-heading-font, Georgia, serif)' }}
+          aria-hidden="true"
+        >
+          01
+        </span>
+
+        <div className="flex min-h-0 flex-1 flex-col justify-center px-6 sm:px-8 lg:px-10 pt-[calc(var(--wb-header-height)+1rem)] pb-8 md:pb-10 min-w-0">
           <div
-            className="will-change-transform min-w-0"
+            className="relative z-10 w-full max-w-md will-change-transform lg:max-w-lg"
             style={{ transform: textTransform, transition: 'transform 0.15s ease-out' }}
           >
             <h1
-              className={`relative w-full max-w-full ${titleSizeClass} font-normal leading-[1.1] text-[var(--wb-text-main)] tracking-tight`}
+              className={`w-full ${titleSizeClass} font-normal leading-[1.08] text-[var(--wb-text-main)] tracking-tight`}
             >
               {titleLines.map((line, index) => (
                 <TitlePart
@@ -333,7 +341,7 @@ export function HeroSection({
 
             {resolvedDescription && (
               <p
-                className="mt-4 max-w-sm line-clamp-4 text-sm leading-relaxed text-[var(--wb-text-secondary)] md:mt-5 md:text-[0.9375rem]"
+                className="mt-5 max-w-prose text-sm leading-relaxed text-[var(--wb-text-secondary)] md:mt-6 md:text-[0.9375rem]"
                 style={{
                   fontFamily: 'var(--wb-body-font, sans-serif)',
                   opacity: loaded || reducedMotion ? 1 : 0,
@@ -345,39 +353,30 @@ export function HeroSection({
                 {resolvedDescription}
               </p>
             )}
-          </div>
-        </div>
 
-        <div className="relative shrink-0 px-6 sm:px-8 lg:px-10 pb-6 md:pb-8">
-          <span
-            className="pointer-events-none absolute bottom-2 right-2 select-none text-[clamp(3rem,10vw,6rem)] font-normal leading-none text-[color-mix(in_srgb,var(--wb-text-main)_80%,transparent)]"
-            style={{ fontFamily: 'var(--wb-heading-font, Georgia, serif)' }}
-            aria-hidden="true"
-          >
-            01
-          </span>
-          <Link
-            ref={ctaRef}
-            href={resolvedCta.href}
-            onMouseMove={handleCtaMove}
-            onMouseLeave={resetCtaMagnet}
-            className="relative z-10 inline-flex items-center gap-3 bg-[var(--wb-card-bg-light)] px-7 py-3.5 text-sm font-medium tracking-wide text-[var(--wb-text-main)] shadow-[0_8px_24px_color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] transition-shadow duration-300 hover:shadow-[0_12px_40px_color-mix(in_srgb,var(--wb-primary)_25%,transparent)]"
-            style={{
-              fontFamily: 'var(--wb-body-font, sans-serif)',
-              opacity: loaded || reducedMotion ? 1 : 0,
-              transform:
-                loaded || reducedMotion
-                  ? `translate(${Math.max(-8, Math.min(8, ctaMagnet.x))}px, ${Math.max(-6, Math.min(6, ctaMagnet.y))}px)`
-                  : 'translateY(12px)',
-              transition: loaded
-                ? 'transform 0.2s ease-out, opacity 0.5s ease, box-shadow 0.3s ease'
-                : `transform 0.6s ${EASE}, opacity 0.6s ${EASE}`,
-              transitionDelay: loaded ? '0s' : '0.8s',
-            }}
-          >
-            {resolvedCta.label}
-            <span aria-hidden="true">→</span>
-          </Link>
+            <Link
+              ref={ctaRef}
+              href={resolvedCta.href}
+              onMouseMove={handleCtaMove}
+              onMouseLeave={resetCtaMagnet}
+              className="relative z-10 mt-8 inline-flex items-center gap-3 bg-[var(--wb-card-bg-light)] px-7 py-3.5 text-sm font-medium tracking-wide text-[var(--wb-text-main)] shadow-[0_8px_24px_color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] transition-shadow duration-300 hover:shadow-[0_12px_40px_color-mix(in_srgb,var(--wb-primary)_25%,transparent)] md:mt-10"
+              style={{
+                fontFamily: 'var(--wb-body-font, sans-serif)',
+                opacity: loaded || reducedMotion ? 1 : 0,
+                transform:
+                  loaded || reducedMotion
+                    ? `translate(${Math.max(-8, Math.min(8, ctaMagnet.x))}px, ${Math.max(-6, Math.min(6, ctaMagnet.y))}px)`
+                    : 'translateY(12px)',
+                transition: loaded
+                  ? 'transform 0.2s ease-out, opacity 0.5s ease, box-shadow 0.3s ease'
+                  : `transform 0.6s ${EASE}, opacity 0.6s ${EASE}`,
+                transitionDelay: loaded ? '0s' : '0.8s',
+              }}
+            >
+              {resolvedCta.label}
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         </div>
       </div>
 
