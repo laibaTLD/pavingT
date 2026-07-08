@@ -32,7 +32,7 @@ export function TitlePart({
 
   return (
     <span
-      className={cn('block overflow-hidden', className)}
+      className={cn('block overflow-hidden pb-[0.12em]', className)}
       style={{
         opacity: loaded ? 1 : 0,
         transform: loaded ? 'translateX(0)' : `translateX(${offset})`,

@@ -149,10 +149,10 @@ export function HeroSection({
 
   const titleSizeClass =
     resolvedTitle.length > 45
-      ? 'text-[clamp(1.6rem,4.5vw,2.75rem)]'
+      ? 'text-[clamp(1.25rem,3.2vw,2rem)]'
       : resolvedTitle.length > 30
-        ? 'text-[clamp(1.85rem,5.2vw,3.35rem)]'
-        : 'text-[clamp(2.15rem,5.5vw,5rem)]';
+        ? 'text-[clamp(1.35rem,3.6vw,2.25rem)]'
+        : 'text-[clamp(1.5rem,4vw,2.75rem)]';
 
   const sectionRef = useRef<HTMLElement>(null);
   const ctaRef = useRef<HTMLAnchorElement>(null);
@@ -326,7 +326,7 @@ export function HeroSection({
             style={{ transform: textTransform, transition: 'transform 0.15s ease-out' }}
           >
             <h1
-              className={`w-full ${titleSizeClass} font-normal leading-[1.08] text-[var(--wb-text-main)] tracking-tight`}
+              className={`w-full ${titleSizeClass} font-normal leading-[1.15] text-[var(--wb-text-main)] tracking-tight`}
             >
               {titleLines.map((line, index) => (
                 <TitlePart
