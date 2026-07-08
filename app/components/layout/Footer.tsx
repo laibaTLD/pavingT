@@ -5,6 +5,7 @@ import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage'
 import { useMemo } from 'react';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { resolvePrimaryCta } from '@/app/components/ui/made';
+import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import {
   getBrandName,
   getBusinessTagline,
@@ -31,9 +32,19 @@ function normalizeHref(href: string): string {
 const DEFAULT_COMPANY_LINKS = [
   { href: '/about-us', text: 'About Us' },
   { href: '/services', text: 'Services' },
-  { href: '#gallery', text: 'Portfolio' },
   { href: '/contact-us', text: 'Contact' },
 ];
+
+function isGalleryFooterLink(href: string, text?: string): boolean {
+  const h = href.trim().toLowerCase();
+  const label = (text || '').trim().toLowerCase();
+  return (
+    h === '/gallery' ||
+    h === '#gallery' ||
+    h.endsWith('/gallery') ||
+    label === 'gallery'
+  );
+}
 
 export function Footer() {
   const { site, pages, services } = useWebBuilder();
@@ -67,15 +78,19 @@ export function Footer() {
       columns[0];
 
     if (companyColumn?.links?.length) {
-      return companyColumn.links.map((link) => ({
-        href: normalizeHref(link.url),
-        text: link.label,
-      }));
+      return companyColumn.links
+        .map((link) => ({
+          href: normalizeHref(link.url),
+          text: link.label,
+        }))
+        .filter((link) => !isGalleryFooterLink(link.href, link.text));
     }
 
     const navLinks = getFooterNavLinks(pages);
     if (navLinks.length) {
-      return navLinks.map((link) => ({ href: link.href, text: link.label }));
+      return navLinks
+        .map((link) => ({ href: link.href, text: link.label }))
+        .filter((link) => !isGalleryFooterLink(link.href, link.text));
     }
 
     return DEFAULT_COMPANY_LINKS;
@@ -109,18 +124,21 @@ export function Footer() {
     return contactPage ? getPageHref(contactPage) : '/contact-us';
   }, [pages, site]);
 
+  const copyrightContent = site?.footer?.copyright;
+  const copyrightPlain = useMemo(() => getCopyrightText(site), [site]);
+
   const copyrightLine = useMemo(() => {
-    const cms = getCopyrightText(site);
-    if (cms && !/^©\d{4}$/.test(cms.trim())) {
-      return { text: cms, showBuilderLink: false };
+    if (copyrightPlain && !/^©\d{4}$/.test(copyrightPlain.trim())) {
+      return { useCmsCopyright: true, text: copyrightPlain, showBuilderLink: false };
     }
     const year = new Date().getFullYear();
     const compactName = businessName.replace(/\s+/g, '');
     return {
+      useCmsCopyright: false,
       text: `${year} ©${compactName}. All Rights Reserved. Build by`,
       showBuilderLink: true,
     };
-  }, [site, businessName]);
+  }, [copyrightPlain, businessName]);
 
   const footerTagline =
     getBusinessTagline(site) || 'Land clearing · Grading · Site preparation';
@@ -299,11 +317,8 @@ export function Footer() {
             style={{ borderColor: borderTint, ...fadeUp('0.5s') }}
           >
             <p
-              className="mb-2 text-xs uppercase tracking-[0.2em]"
-              style={{
-                fontFamily: 'var(--wb-body-font, sans-serif)',
-                color: primaryColor,
-              }}
+              className="mb-2 text-xs uppercase tracking-[0.2em] text-[var(--wb-text-secondary)]"
+              style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
             >
               Contact
             </p>
@@ -329,8 +344,7 @@ export function Footer() {
               {business?.phone && (
                 <a
                   href={`tel:${business.phone}`}
-                  className="block transition-opacity hover:opacity-70"
-                  style={{ color: primaryColor }}
+                  className="block text-[var(--wb-text-main)] transition-opacity hover:opacity-70"
                 >
                   {business.phone}
                 </a>
@@ -338,8 +352,8 @@ export function Footer() {
               {business?.email && (
                 <a
                   href={`mailto:${business.email}`}
-                  className="block max-w-full break-all text-[0.8125rem] leading-snug normal-case transition-opacity hover:opacity-70"
-                  style={{ color: primaryColor, overflowWrap: 'anywhere' }}
+                  className="block max-w-full break-all text-[0.8125rem] leading-snug normal-case text-[var(--wb-text-main)] transition-opacity hover:opacity-70"
+                  style={{ overflowWrap: 'anywhere' }}
                 >
                   {business.email}
                 </a>
@@ -349,11 +363,8 @@ export function Footer() {
             {business?.phone && (
               <Link
                 href={`tel:${business.phone}`}
-                className="mt-6 inline-block text-xs uppercase tracking-[0.15em] transition-opacity hover:opacity-70"
-                style={{
-                  fontFamily: 'var(--wb-body-font, sans-serif)',
-                  color: primaryColor,
-                }}
+                className="mt-6 inline-block text-xs uppercase tracking-[0.15em] text-[var(--wb-text-main)] transition-opacity hover:opacity-70"
+                style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
               >
                 Call Us →
               </Link>
@@ -366,24 +377,30 @@ export function Footer() {
           style={{ borderColor: borderTint, ...fadeUp('0.6s') }}
         >
           <p
-            className="min-w-0 max-w-full text-xs leading-relaxed text-[var(--wb-text-secondary)] break-words"
+            className="min-w-0 max-w-full text-xs leading-relaxed text-[var(--wb-text-secondary)] break-words [&_a]:text-[var(--wb-primary)] [&_a]:transition-opacity [&_a]:hover:opacity-70"
             style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
           >
-            {copyrightLine.text}
-            {copyrightLine.showBuilderLink ? (
+            {copyrightLine.useCmsCopyright && copyrightContent ? (
+              <TiptapRenderer content={copyrightContent} as="inline" className="text-inherit" />
+            ) : (
               <>
-                {' '}
-                <a
-                  href="https://usbrandbooster.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-70"
-                  style={{ color: primaryColor }}
-                >
-                  US Brand Booster
-                </a>
+                {copyrightLine.text}
+                {copyrightLine.showBuilderLink ? (
+                  <>
+                    {' '}
+                    <a
+                      href="https://usbrandbooster.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="transition-opacity hover:opacity-70"
+                      style={{ color: primaryColor }}
+                    >
+                      US Brand Booster
+                    </a>
+                  </>
+                ) : null}
               </>
-            ) : null}
+            )}
           </p>
           <p
             className="text-xs text-[var(--wb-text-secondary)]"

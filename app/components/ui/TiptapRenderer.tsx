@@ -323,7 +323,43 @@ const blockWrapperClass = (className?: string) =>
     ? cn('max-w-none', className)
     : cn('prose prose-gray max-w-none', className);
 
-export const TiptapRenderer: React.FC<TiptapRendererProps> = ({ 
+/** Inline mode: unwrap doc/paragraph nodes so no block elements are emitted. */
+const renderInlineDoc = (normalized: unknown, className?: string): React.ReactNode => {
+  if (!normalized || typeof normalized === 'string') {
+    return <span className={className}>{normalized}</span>;
+  }
+
+  const node = normalized as { type?: string; content?: unknown[] };
+
+  if (node.type === 'doc' && Array.isArray(node.content) && node.content.length > 0) {
+    const firstNode = node.content[0] as { type?: string; content?: unknown[] };
+
+    if (node.content.length === 1 && firstNode?.type === 'heading') {
+      const children = firstNode.content?.map((child: unknown, i: number) => renderNode(child, i));
+      return <span className={className}>{children}</span>;
+    }
+
+    if (node.content.length === 1 && firstNode?.type === 'paragraph') {
+      const children = firstNode.content?.map((child: unknown, i: number) => renderNode(child, i));
+      return <span className={className}>{children}</span>;
+    }
+
+    const children = node.content
+      .map((child: unknown, i: number) => {
+        const c = child as { type?: string; content?: unknown[] };
+        if (c.type === 'heading' || c.type === 'paragraph') {
+          return c.content?.map((textChild: unknown, j: number) => renderNode(textChild, `${i}-${j}`));
+        }
+        return renderNode(child, i);
+      })
+      .flat();
+    return <span className={className}>{children}</span>;
+  }
+
+  return <span className={className}>{renderNode(normalized)}</span>;
+};
+
+export const TiptapRenderer: React.FC<TiptapRendererProps> = ({
   content, 
   className,
   as = 'div'
@@ -341,10 +377,10 @@ export const TiptapRenderer: React.FC<TiptapRendererProps> = ({
         const parsed = JSON.parse(trimmed);
         const normalized = normalizeNode(parsed);
         if (!normalized) return null;
-        const rendered = renderNode(normalized);
         if (as === 'inline') {
-          return <span className={className}>{rendered}</span>;
+          return renderInlineDoc(normalized, className);
         }
+        const rendered = renderNode(normalized);
         return (
           <div className={blockWrapperClass(className)}>
             {rendered}
@@ -370,40 +406,13 @@ export const TiptapRenderer: React.FC<TiptapRendererProps> = ({
   }
   
   // If it's a doc with single paragraph/heading, render inline-friendly ONLY when as="inline"
-  if (as === 'inline' && normalized.type === 'doc' && Array.isArray(normalized.content) && normalized.content.length > 0) {
-    const firstNode = normalized.content[0];
-    
-    // Single heading - render just the heading content
-    if (normalized.content.length === 1 && firstNode?.type === 'heading') {
-      const children = firstNode.content?.map((child: any, i: number) => renderNode(child, i));
-      return <span className={className}>{children}</span>;
-    }
-    
-    // Single paragraph - render just the paragraph content
-    if (normalized.content.length === 1 && firstNode?.type === 'paragraph') {
-      const children = firstNode.content?.map((child: any, i: number) => renderNode(child, i));
-      return <span className={className}>{children}</span>;
-    }
-    
-    // For inline mode with multiple nodes, render all nodes but without block-level formatting
-    const children = normalized.content.map((child: any, i: number) => {
-      if (child.type === 'heading') {
-        return child.content?.map((textChild: any, j: number) => renderNode(textChild, `${i}-${j}`));
-      } else if (child.type === 'paragraph') {
-        return child.content?.map((textChild: any, j: number) => renderNode(textChild, `${i}-${j}`));
-      }
-      return renderNode(child, i);
-    }).flat();
-    return <span className={className}>{children}</span>;
+  if (as === 'inline') {
+    return renderInlineDoc(normalized, className);
   }
-  
+
   // Render full structure
   const rendered = renderNode(normalized);
-  
-  if (as === 'inline') {
-    return <span className={className}>{rendered}</span>;
-  }
-  
+
   return (
     <div className={blockWrapperClass(className)}>
       {rendered}

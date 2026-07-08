@@ -71,6 +71,11 @@ export function TestimonialsSection({
   );
 
   const [active, setActive] = useState(0);
+  const [listExpanded, setListExpanded] = useState(false);
+
+  const INITIAL_VISIBLE = 4;
+  const hasMoreTestimonials = items.length > INITIAL_VISIBLE;
+  const visibleItems = listExpanded ? items : items.slice(0, INITIAL_VISIBLE);
 
   const { ref: triggerRef, isVisible } = useScrollAnimation<HTMLDivElement>({
     threshold: 0.12,
@@ -125,14 +130,14 @@ export function TestimonialsSection({
               className="divide-y border-y"
               style={{ borderColor: themeSurface(primaryColor, 0.22) }}
             >
-              {items.map((item, index) => {
+              {visibleItems.map((item, index) => {
                 const isActive = active === index;
                 return (
                   <button
                     key={`${item.name}-${index}`}
                     type="button"
                     onClick={() => setActive(index)}
-                    className="flex w-full items-start gap-4 py-4 text-left transition-all duration-300"
+                    className="flex w-full items-center gap-4 py-4 text-left transition-all duration-300"
                     style={{
                       paddingLeft: isActive ? 16 : 0,
                       backgroundColor: isActive
@@ -154,7 +159,7 @@ export function TestimonialsSection({
                       {String(index + 1).padStart(2, '0')}
                     </span>
                     <span
-                      className="text-base transition-all duration-300"
+                      className="min-w-0 flex-1 text-base transition-all duration-300"
                       style={{
                         fontFamily: 'var(--wb-heading-font, Georgia, serif)',
                         fontWeight: isActive ? 700 : 500,
@@ -163,10 +168,47 @@ export function TestimonialsSection({
                     >
                       {item.name}
                     </span>
+                    {isActive && (
+                      <span
+                        className="shrink-0 text-sm transition-transform duration-300"
+                        style={{
+                          fontFamily: 'var(--wb-body-font, sans-serif)',
+                          color: primaryColor,
+                        }}
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            {hasMoreTestimonials && (
+              <button
+                type="button"
+                onClick={() => setListExpanded((prev) => !prev)}
+                aria-expanded={listExpanded}
+                aria-label={listExpanded ? 'Show fewer testimonials' : 'Show more testimonials'}
+                className="mt-4 flex w-full items-center justify-between border px-4 py-3 text-left text-sm transition-opacity hover:opacity-70"
+                style={{
+                  borderColor: themeSurface(primaryColor, 0.22),
+                  fontFamily: 'var(--wb-body-font, sans-serif)',
+                  color: 'var(--wb-text-main)',
+                }}
+              >
+                <span>{listExpanded ? 'Show less' : 'Show more testimonials'}</span>
+                <span
+                  className="text-base"
+                  style={{ color: primaryColor }}
+                  aria-hidden="true"
+                >
+                  {listExpanded ? '↑' : '↓'}
+                </span>
+              </button>
+            )}
+
           </div>
 
           <div

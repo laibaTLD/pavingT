@@ -253,7 +253,6 @@ const FOOTER_PAGE_TYPE_ORDER: Page['pageType'][] = [
 /** Extra app routes when no dedicated CMS page exists in the list. */
 const EXTRA_FOOTER_NAV: { slug: string; href: string; defaultName: string }[] = [
   { slug: 'testimonials', href: TESTIMONIALS_ROUTE, defaultName: 'Testimonials' },
-  { slug: 'gallery', href: '/gallery', defaultName: 'Gallery' },
 ];
 
 /** All published pages for footer Explore — same on every route (ignores per-page footer link overrides). */
