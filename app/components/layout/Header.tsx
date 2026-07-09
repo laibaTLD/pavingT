@@ -9,7 +9,8 @@ import {
   getPageHref,
   getTestimonialsNavItem,
 } from '@/app/lib/siteContent';
-import { resolveServiceSlug } from '@/app/lib/serviceAreaSlugs';
+import { buildServiceAreas } from '@/app/components/sections/ServingAreasSection';
+import { resolveServiceSlug, getServiceAreaPageHref } from '@/app/lib/serviceAreaSlugs';
 import { getImageSrc } from '@/app/lib/utils';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme, WB } from '@/hooks/useEditorialTheme';
@@ -21,7 +22,7 @@ interface HeaderProps {
 }
 
 export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
-  const { site, pages, services: allServices } = useWebBuilder();
+  const { site, pages, services: allServices, serviceAreaPages } = useWebBuilder();
   const theme = useEditorialTheme();
 
   const resolvedBusinessName = businessName || getBrandName(site) || 'Business';
@@ -43,6 +44,8 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
   const lastScrollYRef = useRef(0);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [mobileServingAreasOpen, setMobileServingAreasOpen] = useState(false);
+  const [activeServicePanel, setActiveServicePanel] = useState<string | 'all-areas' | null>(null);
 
   const closeServicesTimeoutRef = useRef<number | null>(null);
   const openServices = () => {
@@ -52,7 +55,10 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
   };
   const scheduleCloseServices = () => {
     if (closeServicesTimeoutRef.current) clearTimeout(closeServicesTimeoutRef.current);
-    closeServicesTimeoutRef.current = window.setTimeout(() => setServicesOpen(false), 400);
+    closeServicesTimeoutRef.current = window.setTimeout(() => {
+      setServicesOpen(false);
+      setActiveServicePanel(null);
+    }, 400);
   };
 
   useEffect(() => {
@@ -117,12 +123,61 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
     () =>
       allServices
         .filter((service) => service.status === 'published')
-        .map((service) => ({
-          label: service.name,
-          href: `/service/${resolveServiceSlug(service)}`,
-        })),
+        .map((service) => {
+          const slug = resolveServiceSlug(service);
+          return {
+            label: service.name,
+            slug,
+            href: `/service/${slug}`,
+          };
+        }),
     [allServices]
   );
+
+  const servingAreasNav = useMemo(() => {
+    const areas = buildServiceAreas(
+      undefined,
+      allServices,
+      serviceAreaPages,
+      site?.serviceAreas
+    );
+
+    return areas.map((area) => ({
+      label: area.region ? `${area.city}, ${area.region}` : area.city,
+      href: area.href || getServiceAreaPageHref(area.serviceSlug, area, serviceAreaPages),
+      serviceSlug: area.serviceSlug,
+    }));
+  }, [allServices, serviceAreaPages, site?.serviceAreas]);
+
+  const servingAreasByService = useMemo(() => {
+    const map = new Map<string, { label: string; href: string }[]>();
+    servingAreasNav.forEach((area) => {
+      const list = map.get(area.serviceSlug) ?? [];
+      list.push({ label: area.label, href: area.href });
+      map.set(area.serviceSlug, list);
+    });
+    return map;
+  }, [servingAreasNav]);
+
+  const nestedPanelItems = useMemo(() => {
+    if (!activeServicePanel) return [];
+    if (activeServicePanel === 'all-areas') {
+      return servingAreasNav.map(({ label, href }) => ({ label, href }));
+    }
+    return servingAreasByService.get(activeServicePanel) ?? [];
+  }, [activeServicePanel, servingAreasNav, servingAreasByService]);
+
+  const hasServicesMenu = services.length > 0 || servingAreasNav.length > 0;
+
+  useEffect(() => {
+    if (!servicesOpen) return;
+    setActiveServicePanel((current) => {
+      if (current) return current;
+      if (servingAreasNav.length > 0) return 'all-areas';
+      const first = services.find((s) => (servingAreasByService.get(s.slug)?.length ?? 0) > 0);
+      return first?.slug ?? null;
+    });
+  }, [servicesOpen, servingAreasNav, services, servingAreasByService]);
 
   const onHero = !isScrolled;
   const navBg = onHero
@@ -214,25 +269,106 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                         />
                       </svg>
                     </NavLink>
-                    {servicesOpen && services.length > 0 && (
+                    {servicesOpen && hasServicesMenu && (
                       <div
-                        className="absolute top-full left-1/2 mt-3 w-64 -translate-x-1/2 overflow-hidden border bg-[var(--wb-page-bg)] shadow-[0_16px_40px_color-mix(in_srgb,var(--wb-text-main)_10%,transparent)]"
+                        className="absolute top-full left-1/2 mt-3 flex -translate-x-1/2 overflow-hidden border bg-[var(--wb-page-bg)] shadow-[0_16px_40px_color-mix(in_srgb,var(--wb-text-main)_10%,transparent)]"
                         style={{ borderColor: themeSurface(primaryColor, 0.18) }}
+                        onMouseEnter={openServices}
                       >
-                        <ul className="py-2">
-                          {services.map((svc) => (
-                            <li key={svc.href}>
-                              <Link
-                                href={svc.href}
-                                replace
-                                className="block px-4 py-2.5 text-sm text-[var(--wb-text-main)] transition-colors hover:bg-[color-mix(in_srgb,var(--wb-primary)_8%,transparent)] hover:text-[var(--wb-primary)]"
-                                style={{ fontFamily: WB.bodyFont }}
+                        <div className="w-64 shrink-0 border-r py-2" style={{ borderColor: themeSurface(primaryColor, 0.12) }}>
+                          <ul>
+                            {services.map((svc) => {
+                              const hasAreas = (servingAreasByService.get(svc.slug)?.length ?? 0) > 0;
+                              const isActive = activeServicePanel === svc.slug;
+                              return (
+                                <li key={svc.href}>
+                                  <div
+                                    className={`flex items-center justify-between gap-2 px-4 py-2.5 transition-colors ${
+                                      isActive
+                                        ? 'bg-[color-mix(in_srgb,var(--wb-primary)_8%,transparent)]'
+                                        : 'hover:bg-[color-mix(in_srgb,var(--wb-primary)_6%,transparent)]'
+                                    }`}
+                                    onMouseEnter={() => {
+                                      if (hasAreas) setActiveServicePanel(svc.slug);
+                                    }}
+                                  >
+                                    <Link
+                                      href={svc.href}
+                                      replace
+                                      className={`flex-1 text-sm transition-colors ${
+                                        isActive
+                                          ? 'font-medium text-[var(--wb-text-main)]'
+                                          : 'text-[var(--wb-text-secondary)] hover:text-[var(--wb-text-main)]'
+                                      }`}
+                                      style={{ fontFamily: WB.bodyFont }}
+                                    >
+                                      {svc.label}
+                                    </Link>
+                                    {hasAreas && (
+                                      <span
+                                        className="shrink-0 text-xs text-[var(--wb-text-secondary)]"
+                                        aria-hidden="true"
+                                      >
+                                        ›
+                                      </span>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          {servingAreasNav.length > 0 && (
+                            <div
+                              className="mt-1 border-t pt-1"
+                              style={{ borderColor: themeSurface(primaryColor, 0.12) }}
+                            >
+                              <div
+                                className={`flex items-center justify-between gap-2 px-4 py-2.5 transition-colors ${
+                                  activeServicePanel === 'all-areas'
+                                    ? 'bg-[color-mix(in_srgb,var(--wb-primary)_8%,transparent)]'
+                                    : 'hover:bg-[color-mix(in_srgb,var(--wb-primary)_6%,transparent)]'
+                                }`}
+                                onMouseEnter={() => setActiveServicePanel('all-areas')}
                               >
-                                {svc.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+                                <span
+                                  className={`flex-1 text-sm uppercase tracking-[0.12em] ${
+                                    activeServicePanel === 'all-areas'
+                                      ? 'font-medium text-[var(--wb-text-main)]'
+                                      : 'text-[var(--wb-text-secondary)]'
+                                  }`}
+                                  style={{ fontFamily: WB.bodyFont }}
+                                >
+                                  Serving Areas
+                                </span>
+                                <span
+                                  className="shrink-0 text-xs text-[var(--wb-text-secondary)]"
+                                  aria-hidden="true"
+                                >
+                                  ›
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {nestedPanelItems.length > 0 && (
+                          <div className="max-h-80 w-56 shrink-0 overflow-y-auto py-2">
+                            <ul>
+                              {nestedPanelItems.map((area) => (
+                                <li key={area.href}>
+                                  <Link
+                                    href={area.href}
+                                    replace
+                                    className="block px-4 py-2.5 text-sm text-[var(--wb-text-secondary)] transition-colors hover:bg-[color-mix(in_srgb,var(--wb-primary)_6%,transparent)] hover:text-[var(--wb-text-main)]"
+                                    style={{ fontFamily: WB.bodyFont }}
+                                  >
+                                    {area.label}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -342,7 +478,7 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                         {item.label}
                         <span style={{ color: primaryColor }}>{mobileServicesOpen ? '−' : '+'}</span>
                       </button>
-                      {mobileServicesOpen && services.length > 0 && (
+                      {mobileServicesOpen && hasServicesMenu && (
                         <div className="mt-3 space-y-2 pl-4">
                           {services.map((svc) => (
                             <Link
@@ -356,6 +492,37 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                               {svc.label}
                             </Link>
                           ))}
+                          {servingAreasNav.length > 0 && (
+                            <div className="pt-2">
+                              <button
+                                type="button"
+                                className="flex w-full items-center justify-between text-left text-sm uppercase tracking-[0.12em] text-[var(--wb-text-main)]"
+                                style={{ fontFamily: WB.bodyFont }}
+                                onClick={() => setMobileServingAreasOpen((v) => !v)}
+                              >
+                                Serving Areas
+                                <span style={{ color: primaryColor }}>
+                                  {mobileServingAreasOpen ? '−' : '+'}
+                                </span>
+                              </button>
+                              {mobileServingAreasOpen && (
+                                <div className="mt-2 space-y-2 pl-4">
+                                  {servingAreasNav.map((area) => (
+                                    <Link
+                                      key={area.href}
+                                      href={area.href}
+                                      replace
+                                      onClick={() => setIsOpen(false)}
+                                      className="block text-sm text-[var(--wb-text-secondary)] transition-colors hover:text-[var(--wb-primary)]"
+                                      style={{ fontFamily: WB.bodyFont }}
+                                    >
+                                      {area.label}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

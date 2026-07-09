@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Page, Service, ServiceAreaPage } from '@/app/lib/types';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { getBusinessTagline } from '@/app/lib/siteContent';
@@ -30,6 +30,7 @@ type DisplayArea = {
   city: string;
   region: string;
   href?: string;
+  serviceSlug: string;
 };
 
 function resolveAreaCity(area: unknown): string {
@@ -47,7 +48,7 @@ function resolveAreaCity(area: unknown): string {
   return '';
 }
 
-function normalizeServiceArea(area: unknown): Omit<DisplayArea, 'href'> | null {
+function normalizeServiceArea(area: unknown): Omit<DisplayArea, 'href' | 'serviceSlug'> | null {
   const city = resolveAreaCity(area);
   if (!city) return null;
 
@@ -63,15 +64,15 @@ function areaKey(area: Pick<DisplayArea, 'city' | 'region'>): string {
 }
 
 function enrichArea(
-  area: Omit<DisplayArea, 'href'>,
+  area: Omit<DisplayArea, 'href' | 'serviceSlug'>,
   serviceSlug: string,
   serviceAreaPages: ServiceAreaPage[] | undefined
 ): DisplayArea {
   const href = getServiceAreaPageHref(serviceSlug, area, serviceAreaPages);
-  return { ...area, href: href || undefined };
+  return { ...area, serviceSlug, href: href || undefined };
 }
 
-function buildServiceAreas(
+export function buildServiceAreas(
   servingAreasSection: Page['servingAreasSection'] | undefined,
   services: Service[],
   serviceAreaPages: ServiceAreaPage[],
@@ -194,9 +195,16 @@ export function ServingAreasSection({
   });
   const loaded = isVisible;
 
+  const INITIAL_VISIBLE = 3;
+  const [listExpanded, setListExpanded] = useState(false);
+  const hasMoreAreas = serviceAreas.length > INITIAL_VISIBLE;
+  const visibleAreas = listExpanded
+    ? serviceAreas
+    : serviceAreas.slice(0, INITIAL_VISIBLE);
+
   const borderTint = themeSurface(primaryColor, 0.22);
   const gridColClass =
-    serviceAreas.length >= 4
+    serviceAreas.length >= 3
       ? 'sm:grid-cols-2 lg:grid-cols-3'
       : 'sm:grid-cols-2';
 
@@ -323,7 +331,7 @@ export function ServingAreasSection({
               className={`grid grid-cols-1 ${gridColClass} gap-0 border-t border-l`}
               style={{ borderColor: borderTint }}
             >
-              {serviceAreas.map((area, i) => {
+              {visibleAreas.map((area, i) => {
                 const fromLeft = i % 2 === 0;
                 const cardDelay = 0.5 + i * 0.07;
 
@@ -418,6 +426,30 @@ export function ServingAreasSection({
                 );
               })}
             </div>
+
+            {hasMoreAreas && (
+              <button
+                type="button"
+                onClick={() => setListExpanded((prev) => !prev)}
+                aria-expanded={listExpanded}
+                aria-label={listExpanded ? 'Show fewer serving areas' : 'Show more serving areas'}
+                className="mt-6 flex w-full items-center justify-between border px-4 py-3 text-left text-sm transition-opacity hover:opacity-70"
+                style={{
+                  borderColor: borderTint,
+                  fontFamily: 'var(--wb-body-font, sans-serif)',
+                  color: 'var(--wb-text-main)',
+                }}
+              >
+                <span>{listExpanded ? 'Show less' : 'Show more serving areas'}</span>
+                <span
+                  className="text-base"
+                  style={{ color: primaryColor }}
+                  aria-hidden="true"
+                >
+                  {listExpanded ? '↑' : '↓'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>

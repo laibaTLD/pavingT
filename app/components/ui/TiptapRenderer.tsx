@@ -325,7 +325,8 @@ const blockWrapperClass = (className?: string) =>
 
 /** Inline mode: unwrap doc/paragraph nodes so no block elements are emitted. */
 const renderInlineDoc = (normalized: unknown, className?: string): React.ReactNode => {
-  if (!normalized || typeof normalized === 'string') {
+  if (normalized == null) return null;
+  if (typeof normalized === 'string') {
     return <span className={className}>{normalized}</span>;
   }
 

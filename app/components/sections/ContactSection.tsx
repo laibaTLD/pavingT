@@ -128,10 +128,9 @@ export function ContactSection({ contactSection, className }: ContactSectionProp
               <button
                 type="button"
                 onClick={() => setIsFormOpen(true)}
-                className="group mt-8 inline-flex items-center gap-2 border px-6 py-3 text-sm transition-colors duration-300 hover:bg-[var(--wb-card-bg-light)]"
+                className="group mt-8 inline-flex items-center gap-2 border px-6 py-3 text-sm text-[var(--wb-text-main)] transition-colors duration-300 hover:bg-[var(--wb-card-bg-light)]"
                 style={{
                   fontFamily: 'var(--wb-body-font, sans-serif)',
-                  color: primaryColor,
                   borderColor: themeSurface(primaryColor, 0.35),
                   opacity: loaded ? 1 : 0,
                   transform: loaded ? 'translateY(0)' : 'translateY(20px)',
