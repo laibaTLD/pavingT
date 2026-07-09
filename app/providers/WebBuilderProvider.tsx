@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Site, Page, Service, BlogPost, Project } from '@/app/lib/types';
 import { siteApi, pageApi, serviceApi, blogApi, projectApi, testimonialApi, serviceAreaApi } from '@/app/lib/api';
+import type { InitialSiteData } from '@/app/lib/serverSiteData';
 
 // Site slug from environment variable
 const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG;
@@ -60,37 +61,45 @@ export const useWebBuilder = () => {
 
 interface WebBuilderProviderProps {
   children: ReactNode;
+  initialData?: InitialSiteData | null;
 }
 
-export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children }) => {
-  const [site, setSite] = useState<Site | null>(null);
-  const [pages, setPages] = useState<Page[]>([]);
+export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({
+  children,
+  initialData = null,
+}) => {
+  const [site, setSite] = useState<Site | null>(initialData?.site ?? null);
+  const [pages, setPages] = useState<Page[]>(initialData?.pages ?? []);
   const [services, setServices] = useState<Service[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [testimonials, setTestimonials] = useState<{ title?: string; description?: string; testimonials: any[] } | null>(null);
   const [serviceAreaPages, setServiceAreaPages] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<Page | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
+
+  const loadSecondaryContent = async (siteSlug: string) => {
+    await Promise.all([
+      loadServicesBySiteSlug(siteSlug),
+      loadBlogPosts(siteSlug),
+      loadProjects(siteSlug),
+      loadTestimonials(siteSlug),
+      loadServiceAreaPages(siteSlug),
+    ]);
+  };
 
   const loadSite = async (slug: string) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Use real API when backend is available
+
       const siteData = await siteApi.getSiteBySlug(slug);
       setSite(siteData);
-      
-      await Promise.all([
-        loadPages(siteData.slug),
-        loadServicesBySiteSlug(siteData.slug),
-        loadBlogPosts(siteData.slug),
-        loadProjects(siteData.slug),
-        loadTestimonials(siteData.slug),
-        loadServiceAreaPages(siteData.slug),
-      ]);
+      await loadPages(siteData.slug);
+      setLoading(false);
+
+      void loadSecondaryContent(siteData.slug);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load site';
       setError(
@@ -98,7 +107,6 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
           ? 'The site builder API is temporarily unavailable. Refresh the page or try again shortly.'
           : msg
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -173,15 +181,23 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }
   };
 
-  // Auto-load site from env variable on mount
+  const initialSlug = initialData?.site?.slug;
+
   useEffect(() => {
     if (!SITE_SLUG) {
       setError('NEXT_PUBLIC_WEBBUILDER_SITE_SLUG environment variable is not defined. Please check your .env file.');
       setLoading(false);
       return;
     }
+
+    if (initialSlug) {
+      setLoading(false);
+      void loadSecondaryContent(initialSlug);
+      return;
+    }
+
     loadSite(SITE_SLUG);
-  }, []);
+  }, [initialSlug]);
 
   // Poll site for builder edits (theme, service areas, business info, etc.)
   useEffect(() => {

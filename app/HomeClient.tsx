@@ -17,7 +17,6 @@ import { CTASection } from '@/app/components/sections/CTASection';
 import { GallerySection } from '@/app/components/sections/GallerySection';
 import { ServingAreasSection } from '@/app/components/sections/ServingAreasSection';
 import { getThemeColors } from '@/app/lib/themeBuilder';
-import { PageContentLoader } from '@/app/components/ui/PageContentLoader';
 
 export default function HomeClient() {
   const { site, pages, loading, error } = useWebBuilder();
@@ -32,49 +31,37 @@ export default function HomeClient() {
     body: site?.theme?.bodyFont,
   };
 
-  if (loading) {
-    return <PageContentLoader />;
-  }
+  const displayPage = pages.find((p: Page) => p.pageType === 'home');
 
-  if (error && !site) {
+  if (error && !site && !loading) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center p-4"
+      <div
+        className="flex min-h-[50vh] items-center justify-center p-4"
         style={{ backgroundColor: themeColors.pageBackground }}
       >
-        <div 
-          className="p-6 rounded-lg max-w-lg text-center"
-          style={{ 
+        <div
+          className="max-w-lg rounded-lg p-6 text-center"
+          style={{
             backgroundColor: themeColors.cardBackground,
             borderColor: themeColors.inactive,
-            borderWidth: '1px'
+            borderWidth: '1px',
           }}
         >
           <h2
             className="mb-2 text-xl font-bold"
-            style={{
-              color: themeColors.mainText,
-              fontFamily: themeFonts.heading,
-            }}
+            style={{ color: themeColors.mainText, fontFamily: themeFonts.heading }}
           >
             Error
           </h2>
-          <p
-            style={{
-              color: themeColors.secondaryText,
-              fontFamily: themeFonts.body,
-            }}
-          >
-            {error}
-          </p>
+          <p style={{ color: themeColors.secondaryText, fontFamily: themeFonts.body }}>{error}</p>
         </div>
       </div>
     );
   }
 
-  const displayPage = pages.find((p: Page) => p.pageType === 'home');
-
   if (!displayPage) {
+    if (loading) return null;
+
     return (
       <div 
         className="min-h-screen flex flex-col items-center justify-center p-4"
