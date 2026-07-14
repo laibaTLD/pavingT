@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 interface UseScrollAnimationOptions {
   threshold?: number;
@@ -14,12 +14,29 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
   const { threshold = 0.1, rootMargin = '0px 0px -50px 0px', triggerOnce = true } = options;
 
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<T>(null);
+  const [node, setNode] = useState<T | null>(null);
+  const triggeredRef = useRef(false);
+  const optionsKeyRef = useRef(`${threshold}|${rootMargin}|${triggerOnce}`);
 
-  useEffect(() => {
+  const ref = useCallback((el: T | null) => {
+    setNode(el);
+  }, []);
+
+  useLayoutEffect(() => {
+    const nextKey = `${threshold}|${rootMargin}|${triggerOnce}`;
+    if (optionsKeyRef.current !== nextKey) {
+      optionsKeyRef.current = nextKey;
+      triggeredRef.current = false;
+      setIsVisible(false);
+    }
+
+    if (!node) return;
+    if (triggerOnce && triggeredRef.current) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          triggeredRef.current = true;
           setIsVisible(true);
           if (triggerOnce) {
             observer.unobserve(entry.target);
@@ -31,17 +48,12 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
       { threshold, rootMargin }
     );
 
-    const currentRef = ref.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
+    observer.observe(node);
 
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      observer.disconnect();
     };
-  }, [threshold, rootMargin, triggerOnce]);
+  }, [node, threshold, rootMargin, triggerOnce]);
 
   return { ref, isVisible };
 }

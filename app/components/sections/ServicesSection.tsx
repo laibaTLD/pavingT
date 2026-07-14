@@ -74,11 +74,13 @@ function HeadlineLine({
 }
 
 function resolveFeatureLabels(service: Service): string[] {
-  if (service.tags?.length) {
-    return service.tags.map((tag) => tag.trim()).filter(Boolean);
+  const tags = Array.isArray(service.tags) ? service.tags : [];
+  if (tags.length) {
+    return tags.map((tag) => String(tag).trim()).filter(Boolean);
   }
 
-  return (service.features ?? [])
+  const features = Array.isArray(service.features) ? service.features : [];
+  return features
     .map((feature) => {
       if (typeof feature === 'string') return feature.trim();
       return tiptapToText(feature);
@@ -87,10 +89,11 @@ function resolveFeatureLabels(service: Service): string[] {
 }
 
 function mapServiceToDisplay(service: Service): DisplayService {
+  const gallery = Array.isArray(service.galleryImages) ? service.galleryImages : [];
   const imageUrl = service.thumbnailImage?.url
     ? getImageSrc(service.thumbnailImage.url)
-    : service.galleryImages?.[0]?.url
-      ? getImageSrc(service.galleryImages[0].url)
+    : gallery[0]?.url
+      ? getImageSrc(gallery[0].url)
       : '';
 
   return {
@@ -102,7 +105,7 @@ function mapServiceToDisplay(service: Service): DisplayService {
     imageUrl,
     imageAlt:
       service.thumbnailImage?.altText ||
-      service.galleryImages?.[0]?.altText ||
+      gallery[0]?.altText ||
       service.name,
     ctaHref: `/service/${resolveServiceSlug(service)}`,
     ctaLabel: 'Discuss Project',

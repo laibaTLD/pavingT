@@ -73,7 +73,7 @@ export function AnimatedHeading({
       className={cn(
         'relative font-normal leading-[1.1] tracking-tight text-[var(--wb-text-main)]',
         sizeClass,
-        lightSweep && 'bg-clip-text',
+        lightSweep && 'bg-clip-text text-transparent',
         className
       )}
       style={{
@@ -81,9 +81,11 @@ export function AnimatedHeading({
         ...(lightSweep
           ? {
               backgroundImage:
-                'linear-gradient(110deg, currentColor 40%, color-mix(in srgb, var(--wb-text-on-dark) 85%, transparent) 50%, currentColor 60%)',
+                'linear-gradient(110deg, var(--wb-text-main) 40%, color-mix(in srgb, var(--wb-primary) 70%, var(--wb-text-main)) 50%, var(--wb-text-main) 60%)',
               backgroundSize: '200% 100%',
+              backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
               animation: loaded ? 'title-light-sweep 2.4s ease-out 0.6s forwards' : undefined,
             }
           : undefined),
