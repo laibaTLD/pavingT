@@ -283,13 +283,13 @@ export function ContactSection({ contactSection, className }: ContactSectionProp
                       {businessHours.hours.map((day) => (
                         <div
                           key={day.day}
-                          className={`flex justify-between gap-4 ${SECTION.body}`}
+                          className={`flex justify-between gap-3 ${SECTION.body}`}
                           style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
                         >
-                          <span className="font-medium text-[var(--wb-text-main)]">
+                          <span className="shrink-0 font-medium text-[var(--wb-text-main)]">
                             {DAY_LABELS[day.day]}
                           </span>
-                          <span>
+                          <span className="min-w-0 text-right break-words">
                             {formatDayHours(day, businessHours.displayFormat)}
                           </span>
                         </div>

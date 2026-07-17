@@ -107,6 +107,11 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
         isServices: true,
       },
       {
+        href: '/gallery',
+        label: 'Gallery',
+        isServices: false,
+      },
+      {
         href: testimonialsNav.href,
         label: testimonialsNav.name,
         isServices: false,

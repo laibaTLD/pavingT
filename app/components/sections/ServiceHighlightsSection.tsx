@@ -112,10 +112,10 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
       className={cn('relative py-3 md:py-8 lg:py-12 overflow-hidden', className)}
       style={{ backgroundColor: themeColors.pageBackground }}
     >
-      <div className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-24">
+      <div className="mx-auto w-full max-w-[1800px] px-5 sm:px-8 md:px-16 lg:px-24">
         
         {/* Header Area */}
-        <div ref={headlineRef} className="mb-12 lg:mb-22">
+        <div ref={headlineRef} className="mb-10 sm:mb-12 lg:mb-22">
            <div className="flex items-center gap-4 mb-6">
               <div className="w-10 h-[1.5px]" style={{ backgroundColor: brandColor }} />
               <span className="text-[10px] font-bold tracking-[0.4em] uppercase" style={{ color: primaryTextColor }}>
@@ -123,7 +123,7 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
               </span>
            </div>
            {serviceHighlightsSection.title && (
-              <h2 className="text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight uppercase font-light leading-none">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight uppercase font-light leading-none break-words">
                  <div className="[&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
                    {/* Hierarchical styling to match image: First line Red, Subtitle Black */}
                    <style jsx>{`
@@ -138,15 +138,15 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
         </div>
 
         {/* Highlights Display - Using Brand Color for High Impact Data */}
-        <div ref={gridRef} className="flex flex-col md:flex-row flex-wrap items-start justify-between gap-y-20 gap-x-12 lg:gap-x-24">
+        <div ref={gridRef} className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-12 xl:gap-x-16">
           {highlights.map((highlight, index) => {
             const counter = parseCounter((highlight as any).price);
 
             return (
-              <div key={index} className="highlight-item flex flex-col group min-w-[200px] flex-1">
-                <div className="relative mb-8">
+              <div key={index} className="highlight-item group flex min-w-0 flex-col">
+                <div className="relative mb-6 sm:mb-8">
                   <div 
-                     className="big-number text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none whitespace-nowrap"
+                     className="big-number text-4xl font-extralight leading-none tracking-[0.08em] sm:text-5xl md:text-6xl lg:text-[clamp(2.5rem,5vw,5.5rem)]"
                      data-value={counter?.value || 0}
                      data-suffix={counter?.suffix || ''}
                      style={{ color: brandColor }} // High Impact Brand Color as per image design
@@ -159,14 +159,14 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
                   />
                 </div>
 
-                <div className="">
+                <div className="min-w-0">
                   {highlight.title && (
-                    <h4 className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.4em] leading-tight" style={{ color: primaryTextColor }}>
+                    <h4 className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.4em] leading-tight break-words" style={{ color: primaryTextColor }}>
                       <TiptapRenderer content={highlight.title} as="inline" />
                     </h4>
                   )}
                   {highlight.description && (
-                    <div className="text-[10px] md:text-[11px] font-light tracking-[0.1em] leading-relaxed opacity-60 uppercase max-w-[240px]" style={{ color: secondaryTextColor }}>
+                    <div className="mt-2 max-w-full text-[10px] font-light uppercase leading-relaxed tracking-[0.1em] opacity-60 md:text-[11px] md:max-w-[240px]" style={{ color: secondaryTextColor }}>
                       <TiptapRenderer content={highlight.description} as="inline" />
                     </div>
                   )}

@@ -85,6 +85,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: var(--wb-text-main);
   background-color: var(--wb-page-bg);
+  overflow-x: hidden;
 }
 
 /* Hero editorial — site builder body (bold) + heading (italic) */

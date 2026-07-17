@@ -376,7 +376,7 @@ function FeaturedPostCard({
       }}
     >
       <Link href={`/blog/${post.slug}`} className="block no-underline">
-        <div className="relative aspect-[21/9] min-h-[220px] w-full overflow-hidden sm:min-h-[280px]">
+        <div className="relative aspect-[4/3] min-h-[200px] w-full overflow-hidden sm:aspect-[21/9] sm:min-h-[280px]">
           {imgSrc ? (
             <OptimizedImage
               src={imgSrc}
@@ -402,7 +402,7 @@ function FeaturedPostCard({
                 'linear-gradient(to top, color-mix(in srgb, var(--wb-text-main) 82%, transparent) 0%, color-mix(in srgb, var(--wb-text-main) 35%, transparent) 45%, transparent 100%)',
             }}
           />
-          <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 lg:p-12">
+          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 md:p-10 lg:p-12">
             <PostMeta
               post={post}
               showDate={showDate}
@@ -411,7 +411,7 @@ function FeaturedPostCard({
             />
             {post.title && (
               <h3
-                className="max-w-3xl text-2xl leading-tight text-white md:text-4xl lg:text-[2.75rem]"
+                className="max-w-3xl text-xl leading-tight text-white break-words sm:text-2xl md:text-4xl lg:text-[2.75rem]"
                 style={{ fontFamily: 'var(--wb-heading-font, Georgia, serif)' }}
               >
                 {post.title}

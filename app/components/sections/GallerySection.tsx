@@ -11,6 +11,7 @@ import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage'
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
 import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { GALLERY_IMAGES } from '@/app/lib/galleryImages';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
@@ -47,8 +48,16 @@ function mapGalleryImages(images: GallerySectionImages | undefined): GalleryImag
     .filter((img): img is GalleryImage => img !== null);
 }
 
+function mapHardcodedImages(): GalleryImage[] {
+  return GALLERY_IMAGES.map((img, index) => ({
+    id: `hardcoded-${index}`,
+    imageUrl: img.src,
+    altText: img.alt,
+  }));
+}
+
 export function GallerySection({ gallerySection, className }: GallerySectionProps) {
-  const { site, pages } = useWebBuilder();
+  const { pages } = useWebBuilder();
 
   const theme = useEditorialTheme();
   const primaryColor = theme.primary;
@@ -63,10 +72,10 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
     [gallerySection?.description]
   );
 
-  const galleryImages = useMemo(
-    () => mapGalleryImages(gallerySection?.images),
-    [gallerySection?.images]
-  );
+  const galleryImages = useMemo(() => {
+    const fromBuilder = mapGalleryImages(gallerySection?.images);
+    return fromBuilder.length > 0 ? fromBuilder : mapHardcodedImages();
+  }, [gallerySection?.images]);
 
   const galleryHref = useMemo(() => {
     const galleryPage = pages.find(
@@ -80,7 +89,8 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
   });
   const loaded = isVisible;
 
-  if (!gallerySection || gallerySection.enabled === false) return null;
+  // Hide only when explicitly disabled; otherwise show builder or hardcoded images
+  if (gallerySection?.enabled === false) return null;
   if (!galleryImages.length) return null;
 
   return (
@@ -133,12 +143,12 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
         </div>
 
         <div className={SECTION.content}>
-          <div className="overflow-x-auto pb-4">
-            <div className="flex gap-4 md:gap-6 w-max max-w-full">
+          <div className="-mx-6 overflow-x-auto overscroll-x-contain px-6 pb-4 [scrollbar-width:thin] md:-mx-12 md:px-12 lg:-mx-16 lg:px-16 xl:-mx-20 xl:px-20">
+            <div className="flex w-max gap-4 md:gap-6">
               {galleryImages.slice(0, 6).map((img, index) => (
                 <article
                   key={img.id}
-                  className="relative shrink-0 w-[min(72vw,280px)] md:w-[min(28vw,320px)] overflow-hidden bg-[var(--wb-card-bg-light)] shadow-[0_16px_40px_color-mix(in_srgb,var(--wb-text-main)_8%,transparent)]"
+                  className="relative w-[min(78vw,280px)] shrink-0 overflow-hidden bg-[var(--wb-card-bg-light)] shadow-[0_16px_40px_color-mix(in_srgb,var(--wb-text-main)_8%,transparent)] sm:w-[min(60vw,280px)] md:w-[min(28vw,320px)]"
                   style={{
                     opacity: loaded ? 1 : 0,
                     transform: loaded ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',

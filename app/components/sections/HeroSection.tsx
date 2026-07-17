@@ -202,22 +202,19 @@ export function HeroSection({
     : undefined;
   const panelSlide = anim ? (loaded ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)';
 
-  const heroHeightClass =
-    'h-[100svh] min-h-[100svh] max-h-[100svh] -mt-[var(--wb-header-height)]';
-
   if (hero?.enabled === false) return null;
 
   return (
     <section
       ref={sectionRef}
       className={cn(
-        'relative overflow-hidden bg-[var(--wb-page-bg)] md:grid md:grid-cols-[min(440px,38vw)_1fr]',
-        heroHeightClass,
+        'relative -mt-[var(--wb-header-height)] flex min-h-[100svh] flex-col overflow-hidden bg-[var(--wb-page-bg)]',
+        'md:grid md:h-[100svh] md:max-h-[100svh] md:min-h-[100svh] md:grid-cols-[minmax(0,min(440px,38vw))_minmax(0,1fr)]',
         className
       )}
     >
-      <div className="absolute inset-0 md:relative md:col-start-2 md:h-full md:min-h-0">
-        <div className="absolute inset-x-0 bottom-0 top-[38vh] md:inset-0 overflow-hidden">
+      <div className="relative order-2 min-h-[min(52vh,420px)] flex-1 md:order-none md:col-start-2 md:h-full md:min-h-0">
+        <div className="absolute inset-0 overflow-hidden">
           <div
             className="relative h-full w-full will-change-transform"
             style={{
@@ -246,7 +243,7 @@ export function HeroSection({
         </div>
 
         {heroSrc && anim && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[38vh] md:inset-0 z-[2] overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
             <div
               className="absolute inset-0"
               style={{
@@ -257,7 +254,7 @@ export function HeroSection({
         )}
 
         {anim && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[38vh] md:inset-0 z-[3]">
+          <div className="pointer-events-none absolute inset-0 z-[3]">
             <div
               className="absolute bottom-[18%] right-[12%] h-24 w-40 rounded-full blur-2xl"
               style={{ backgroundColor: themeSurface(theme.primary, 0.05) }}
@@ -266,14 +263,14 @@ export function HeroSection({
         )}
 
         {anim && (
-          <div className="absolute inset-x-0 bottom-0 top-[38vh] md:inset-0 z-[4] pointer-events-none">
+          <div className="pointer-events-none absolute inset-0 z-[4]">
             <FloatingParticles mouseX={mouse.x} mouseY={mouse.y} primaryColor={theme.primary} />
           </div>
         )}
 
         {(cardTitle || cardDescription) && (
         <div
-          className="absolute bottom-0 right-0 z-10 w-full bg-[var(--wb-page-bg)] px-6 py-6 sm:px-8 md:w-[min(420px,36vw)] md:px-10 md:py-10"
+          className="absolute bottom-0 right-0 z-10 w-full max-w-full bg-[var(--wb-page-bg)] px-5 py-5 sm:px-8 sm:py-6 md:w-[min(420px,36vw)] md:px-10 md:py-10"
           style={{
             opacity: loaded || reducedMotion ? 1 : 0,
             transform: loaded || reducedMotion ? 'translateY(0)' : 'translateY(24px)',
@@ -283,7 +280,7 @@ export function HeroSection({
         >
           {cardTitle && (
           <h2
-            className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--wb-text-main)]"
+            className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--wb-text-main)] break-words"
             style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
           >
             {cardTitle}
@@ -292,7 +289,7 @@ export function HeroSection({
           {cardDescription && (
           <p
             className={cn(
-              'text-sm leading-relaxed text-[var(--wb-text-secondary)] md:text-[0.9375rem]',
+              'text-sm leading-relaxed text-[var(--wb-text-secondary)] break-words md:text-[0.9375rem]',
               cardTitle && 'mt-3'
             )}
             style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
@@ -305,7 +302,7 @@ export function HeroSection({
       </div>
 
       <div
-        className="relative z-20 flex h-full min-h-0 flex-col bg-[var(--wb-page-bg)] min-w-0 md:col-start-1 md:row-start-1"
+        className="relative z-20 order-1 flex min-w-0 shrink-0 flex-col bg-[var(--wb-page-bg)] md:order-none md:col-start-1 md:row-start-1 md:h-full md:min-h-0"
         style={{
           transform: panelSlide,
           transition: `transform ${ENTRANCE} ${EASE}`,
@@ -313,20 +310,20 @@ export function HeroSection({
         }}
       >
         <span
-          className="pointer-events-none absolute right-6 top-[calc(var(--wb-header-height)+0.5rem)] select-none text-[clamp(2.5rem,7vw,4rem)] font-normal leading-none text-[color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] sm:right-8 lg:right-10"
+          className="pointer-events-none absolute right-5 top-[calc(var(--wb-header-height)+0.5rem)] select-none text-[clamp(2rem,7vw,4rem)] font-normal leading-none text-[color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] sm:right-8 lg:right-10"
           style={{ fontFamily: 'var(--wb-heading-font, Georgia, serif)' }}
           aria-hidden="true"
         >
           01
         </span>
 
-        <div className="flex min-h-0 flex-1 flex-col justify-center px-6 sm:px-8 lg:px-10 pt-[calc(var(--wb-header-height)+1rem)] pb-8 md:pb-10 min-w-0">
+        <div className="flex min-w-0 flex-col justify-center px-5 pb-8 pt-[calc(var(--wb-header-height)+1rem)] sm:px-8 md:min-h-0 md:flex-1 md:px-8 md:pb-10 lg:px-10">
           <div
             className="relative z-10 w-full max-w-md will-change-transform lg:max-w-lg"
             style={{ transform: textTransform, transition: 'transform 0.15s ease-out' }}
           >
             <h1
-              className={`w-full ${titleSizeClass} font-normal leading-[1.15] text-[var(--wb-text-main)] tracking-tight`}
+              className={`w-full break-words ${titleSizeClass} font-normal leading-[1.15] tracking-tight text-[var(--wb-text-main)]`}
             >
               {titleLines.map((line, index) => (
                 <TitlePart
@@ -341,7 +338,7 @@ export function HeroSection({
 
             {resolvedDescription && (
               <p
-                className="mt-5 max-w-prose text-sm leading-relaxed text-[var(--wb-text-secondary)] md:mt-6 md:text-[0.9375rem]"
+                className="mt-4 max-w-prose text-sm leading-relaxed text-[var(--wb-text-secondary)] break-words sm:mt-5 md:mt-6 md:text-[0.9375rem]"
                 style={{
                   fontFamily: 'var(--wb-body-font, sans-serif)',
                   opacity: loaded || reducedMotion ? 1 : 0,
@@ -359,7 +356,7 @@ export function HeroSection({
               href={resolvedCta.href}
               onMouseMove={handleCtaMove}
               onMouseLeave={resetCtaMagnet}
-              className="relative z-10 mt-8 inline-flex items-center gap-3 bg-[var(--wb-card-bg-light)] px-7 py-3.5 text-sm font-medium tracking-wide text-[var(--wb-text-main)] shadow-[0_8px_24px_color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] transition-shadow duration-300 hover:shadow-[0_12px_40px_color-mix(in_srgb,var(--wb-primary)_25%,transparent)] md:mt-10"
+              className="relative z-10 mt-6 inline-flex max-w-full items-center gap-3 bg-[var(--wb-card-bg-light)] px-5 py-3 text-sm font-medium tracking-wide text-[var(--wb-text-main)] shadow-[0_8px_24px_color-mix(in_srgb,var(--wb-text-main)_12%,transparent)] transition-shadow duration-300 hover:shadow-[0_12px_40px_color-mix(in_srgb,var(--wb-primary)_25%,transparent)] sm:mt-8 sm:px-7 sm:py-3.5 md:mt-10"
               style={{
                 fontFamily: 'var(--wb-body-font, sans-serif)',
                 opacity: loaded || reducedMotion ? 1 : 0,
@@ -373,7 +370,7 @@ export function HeroSection({
                 transitionDelay: loaded ? '0s' : '0.8s',
               }}
             >
-              {resolvedCta.label}
+              <span className="truncate">{resolvedCta.label}</span>
               <span aria-hidden="true">→</span>
             </Link>
           </div>

@@ -63,21 +63,21 @@ export const ServiceBanner: React.FC<ServiceBannerProps> = ({ service }) => {
             </div>
 
             {/* Banner Content */}
-            <div className="relative z-10 text-center px-6 md:px-12 py-20 md:py-32 max-w-5xl mx-auto">
+            <div className="relative z-10 mx-auto max-w-5xl px-5 py-16 text-center sm:px-6 md:px-12 md:py-32">
                 {/* Label */}
-                <div className="flex items-center justify-center gap-4 mb-8">
-                    <div className="w-12 h-[1px] bg-[color-mix(in_srgb,var(--wb-text-on-dark)_40%,transparent)]" />
+                <div className="mb-6 flex items-center justify-center gap-3 sm:mb-8 sm:gap-4">
+                    <div className="h-[1px] w-8 bg-[color-mix(in_srgb,var(--wb-text-on-dark)_40%,transparent)] sm:w-12" />
                     <span 
-                        className="text-[10px] md:text-xs tracking-[0.4em] uppercase font-bold text-[var(--wb-text-on-dark-secondary)]"
+                        className="text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--wb-text-on-dark-secondary)] md:text-xs"
                         style={{ fontFamily: themeFonts.body }}
                     >
                         Our Services
                     </span>
-                    <div className="w-12 h-[1px] bg-[color-mix(in_srgb,var(--wb-text-on-dark)_40%,transparent)]" />
+                    <div className="h-[1px] w-8 bg-[color-mix(in_srgb,var(--wb-text-on-dark)_40%,transparent)] sm:w-12" />
                 </div>
 
                 <h1
-                    className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-light uppercase tracking-tight text-[var(--wb-text-on-dark)] leading-[0.95] mb-6"
+                    className="mb-6 break-words text-3xl font-light uppercase leading-[0.95] tracking-tight text-[var(--wb-text-on-dark)] sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl"
                     style={{ 
                         fontFamily: themeFonts.heading,
                         textShadow: `0 4px 30px color-mix(in srgb, ${themeColors.pageBackground} 30%, transparent)` 
@@ -88,7 +88,7 @@ export const ServiceBanner: React.FC<ServiceBannerProps> = ({ service }) => {
                 
                 {service.shortDescription && (
                     <div
-                        className="text-base md:text-lg lg:text-xl text-[var(--wb-text-on-dark-secondary)] max-w-2xl mx-auto font-light tracking-wide leading-relaxed"
+                        className="mx-auto max-w-2xl text-sm font-light leading-relaxed tracking-wide text-[var(--wb-text-on-dark-secondary)] break-words md:text-lg lg:text-xl"
                         style={{ fontFamily: themeFonts.body }}
                     >
                         {typeof service.shortDescription === 'string'
@@ -96,12 +96,12 @@ export const ServiceBanner: React.FC<ServiceBannerProps> = ({ service }) => {
                             : <TiptapRenderer content={service.shortDescription} as="inline" />}
                     </div>
                 )}
+            </div>
 
-                {/* Scroll Indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60">
-                    <span className="text-[9px] tracking-[0.3em] uppercase text-[var(--wb-text-on-dark-secondary)]">Scroll</span>
-                    <div className="w-px h-8 bg-gradient-to-b from-[color-mix(in_srgb,var(--wb-text-on-dark)_60%,transparent)] to-transparent" />
-                </div>
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 opacity-60 sm:flex">
+                <span className="text-[9px] uppercase tracking-[0.3em] text-[var(--wb-text-on-dark-secondary)]">Scroll</span>
+                <div className="h-8 w-px bg-gradient-to-b from-[color-mix(in_srgb,var(--wb-text-on-dark)_60%,transparent)] to-transparent" />
             </div>
         </section>
     );

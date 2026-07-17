@@ -66,22 +66,22 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
 
   return (
     <section 
-      className="py-24 md:py-32 lg:py-40 flex flex-col gap-32 lg:gap-48" 
+      className="flex flex-col gap-16 py-14 sm:gap-24 sm:py-20 md:py-32 lg:gap-48 lg:py-40" 
       style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
       
       {/* PART 1: "ANY QUESTIONS?" CALL TO ACTION */}
-      <div className="container mx-auto px-6 text-center flex flex-col items-center">
-        <div className="max-w-4xl space-y-4 mb-20 text-center">
+      <div className="container mx-auto flex flex-col items-center px-5 text-center sm:px-6">
+        <div className="mb-10 max-w-4xl space-y-4 text-center sm:mb-16 md:mb-20">
           <h2 
-            className="text-3xl md:text-5xl lg:text-7xl font-extralight tracking-[0.15em] uppercase leading-[1.1]"
+            className="text-2xl font-extralight uppercase leading-[1.1] tracking-[0.12em] break-words sm:text-3xl md:text-5xl md:tracking-[0.15em] lg:text-7xl"
             style={{ fontFamily: themeFonts.heading, color: themeColors.mainText }}
           >
             Any questions?<br />
             Simply ask us.
           </h2>
           <h3 
-            className="text-3xl md:text-5xl lg:text-7xl font-light tracking-[0.15em] uppercase italic"
+            className="text-2xl font-light uppercase italic tracking-[0.12em] break-words sm:text-3xl md:text-5xl md:tracking-[0.15em] lg:text-7xl"
             style={{ 
                 fontFamily: themeFonts.heading, 
                 color: themeColors.primaryButton 
@@ -93,12 +93,12 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
 
         <button
           onClick={() => setIsFormOpen(true)}
-          className="group relative flex items-center justify-between px-10 py-6 w-full max-w-[320px] transition-all duration-500 overflow-hidden text-left"
+          className="group relative flex w-full max-w-[320px] items-center justify-between overflow-hidden px-8 py-5 text-left transition-all duration-500 sm:px-10 sm:py-6"
           style={{ backgroundColor: themeColors.primaryButton, color: themeColors.darkPrimaryText }}
         >
-          <span className="text-[11px] font-bold tracking-[0.4em] uppercase z-10">Get a Quote</span>
-          <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform z-10" />
-          <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--wb-page-bg)_10%,transparent)] translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <span className="z-10 text-[11px] font-bold uppercase tracking-[0.4em]">Get a Quote</span>
+          <ArrowRight size={20} className="z-10 transition-transform group-hover:translate-x-1" />
+          <div className="absolute inset-0 translate-y-full bg-[color-mix(in_srgb,var(--wb-page-bg)_10%,transparent)] transition-transform duration-500 group-hover:translate-y-0" />
         </button>
       </div>
 
@@ -106,23 +106,23 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
       <ContactSideForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
 
       {/* PART 2: "WHERE TO FIND US" MAP SECTION */}
-      <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+      <div className="container mx-auto grid grid-cols-1 items-start gap-10 px-5 sm:gap-14 sm:px-6 md:px-12 lg:grid-cols-2 lg:gap-24">
         
         {/* Left: Info */}
-        <div className="space-y-16">
+        <div className="min-w-0 space-y-10 sm:space-y-16">
           <h2 
-            className="text-3xl md:text-5xl font-extralight tracking-[0.2em] uppercase leading-tight"
+            className="text-2xl font-extralight uppercase leading-tight tracking-[0.16em] break-words sm:text-3xl md:text-5xl md:tracking-[0.2em]"
             style={{ fontFamily: themeFonts.heading, color: themeColors.mainText }}
           >
             Where to<br />find us
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12 lg:gap-20">
             {/* Address */}
-            <div className="space-y-6">
+            <div className="min-w-0 space-y-6">
               <div className="space-y-1">
-                <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Head Office</span>
-                <p className="text-sm md:text-base font-light tracking-wide max-w-sm opacity-80 leading-relaxed uppercase">
+                <span className="mb-4 block text-[10px] font-bold uppercase tracking-[0.2em] opacity-30">Head Office</span>
+                <p className="max-w-sm text-sm font-light uppercase leading-relaxed tracking-wide opacity-80 break-words md:text-base">
                   {address?.street || 'Avda. Valdemarín 86'}<br />
                   {address?.city || 'Aravaca'}, {address?.zipCode || '28023'}
                 </p>
@@ -132,24 +132,24 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${address?.street || ''} ${address?.city || ''}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex items-center justify-between px-8 py-4 w-full max-w-[220px] transition-all duration-500 overflow-hidden mt-8"
+                className="group relative mt-6 flex w-full max-w-[220px] items-center justify-between overflow-hidden px-8 py-4 transition-all duration-500 sm:mt-8"
                 style={{ backgroundColor: themeColors.primaryButton, color: themeColors.darkPrimaryText }}
               >
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase z-10">View Map</span>
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform z-10" />
-                <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--wb-page-bg)_10%,transparent)] translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                <span className="z-10 text-[10px] font-bold uppercase tracking-[0.3em]">View Map</span>
+                <ArrowRight size={18} className="z-10 transition-transform group-hover:translate-x-1" />
+                <div className="absolute inset-0 translate-y-full bg-[color-mix(in_srgb,var(--wb-page-bg)_10%,transparent)] transition-transform duration-500 group-hover:translate-y-0" />
               </a>
             </div>
 
             {/* Business Hours */}
             {businessHours?.isEnabled && safeBusinessHours.length > 0 && (
-              <div className="space-y-6">
-                <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Business Hours</span>
+              <div className="min-w-0 space-y-6">
+                <span className="mb-4 block text-[10px] font-bold uppercase tracking-[0.2em] opacity-30">Business Hours</span>
                 <div className="space-y-2">
                   {safeBusinessHours.filter(Boolean).map((day: any) => (
-                    <div key={day.day} className="flex justify-between items-baseline gap-4 text-[11px] uppercase tracking-widest opacity-80 font-light">
-                      <span className="font-semibold opacity-60">{DAY_LABELS[day.day] || day.day}</span>
-                      <span className="text-right">{formatDayHours(day)}</span>
+                    <div key={day.day} className="flex items-baseline justify-between gap-3 text-[11px] font-light uppercase tracking-widest opacity-80">
+                      <span className="shrink-0 font-semibold opacity-60">{DAY_LABELS[day.day] || day.day}</span>
+                      <span className="min-w-0 text-right break-words">{formatDayHours(day)}</span>
                     </div>
                   ))}
                 </div>
@@ -159,9 +159,9 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
         </div>
 
         {/* Right: Architectural Map Overlay */}
-        <div className="relative aspect-[16/10] md:aspect-video lg:aspect-[4/3] w-full overflow-hidden shadow-2xl lg:mt-12">
+        <div className="relative aspect-[16/10] w-full overflow-hidden shadow-2xl md:aspect-video lg:mt-12 lg:aspect-[4/3]">
           {hasValidCoordinates ? (
-              <div className="w-full h-full grayscale-[0.9] contrast-[1.1] brightness-[1.1] scale-100 hover:grayscale-0 transition-all duration-1000">
+              <div className="h-full w-full scale-100 grayscale-[0.9] contrast-[1.1] brightness-[1.1] transition-all duration-1000 hover:grayscale-0">
                 <iframe
                   title="Office Location"
                   width="100%"
@@ -174,13 +174,13 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
                 />
               </div>
           ) : (
-             <div className="w-full h-full bg-[var(--wb-page-bg)] flex items-center justify-center grayscale">
-                <span className="text-[10px] uppercase tracking-[0.5em] opacity-30 italic">Satellite View Pending</span>
+             <div className="flex h-full w-full items-center justify-center bg-[var(--wb-page-bg)] grayscale">
+                <span className="text-[10px] uppercase italic tracking-[0.5em] opacity-30">Satellite View Pending</span>
              </div>
           )}
           
           {/* Subtle architectural frame */}
-          <div className="absolute inset-0 border-[20px] border-white/5 pointer-events-none" />
+          <div className="pointer-events-none absolute inset-0 border-[12px] border-white/5 sm:border-[20px]" />
         </div>
       </div>
     </section>

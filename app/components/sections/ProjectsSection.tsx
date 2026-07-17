@@ -319,7 +319,7 @@ export function ProjectsSection({
                     style={{ backgroundColor: themeSurface(primaryColor, 0.03) }}
                   >
                     <span
-                      className="pointer-events-none absolute -right-2 bottom-2 select-none text-[7rem] font-normal leading-none md:text-[8rem]"
+                      className="pointer-events-none absolute -right-2 bottom-2 select-none text-[4.5rem] font-normal leading-none sm:text-[7rem] md:text-[8rem]"
                       style={{
                         fontFamily: 'var(--wb-heading-font, Georgia, serif)',
                         color: themeSurface(primaryColor, 0.07),
