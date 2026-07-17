@@ -220,7 +220,7 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
         className={`fixed top-0 left-0 right-0 z-[1000] transition-all duration-300 ${navBg} ${
           !isVisible ? '-translate-y-full' : 'translate-y-0'
         }`}
-        style={{ borderColor: navBorder, ['--wb-header-height' as string]: '3.25rem' }}
+        style={{ borderColor: navBorder, ['--wb-header-height' as string]: '4.5rem' }}
       >
         <div className="mx-auto flex h-[var(--wb-header-height)] max-w-7xl items-center justify-between gap-4 px-6 sm:px-8 lg:px-12">
           <div className="shrink-0">
@@ -234,10 +234,10 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                 <OptimizedImage
                   alt={logoAlt}
                   src={logoSrc}
-                  width={160}
-                  height={56}
+                  width={220}
+                  height={80}
                   sizes={IMAGE_SIZES.logo}
-                  className="h-9 w-auto object-contain transition-all duration-300 md:h-10"
+                  className="h-12 w-auto object-contain transition-all duration-300 md:h-14"
                   priority
                 />
               ) : (
@@ -434,10 +434,10 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                 <OptimizedImage
                   alt={logoAlt}
                   src={logoSrc}
-                  width={160}
-                  height={56}
+                  width={200}
+                  height={82}
                   sizes={IMAGE_SIZES.logo}
-                  className="h-14 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                 />
               ) : (
                 <span

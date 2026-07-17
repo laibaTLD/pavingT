@@ -30,7 +30,7 @@
   --wb-text-secondary: #4b5563;
   --wb-text-on-dark: #ffffff;
   --wb-text-on-dark-secondary: #d1d5db;
-  --wb-header-height: 3.25rem;
+  --wb-header-height: 4.5rem;
   /* Scrollbar tokens: white shades */
   --wb-scrollbar-track: rgba(255, 255, 255, 0.18);
   --wb-scrollbar-thumb: rgba(107, 114, 128, 0.85);
