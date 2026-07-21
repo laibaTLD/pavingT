@@ -13,18 +13,36 @@ interface CTAProps {
 type CtaSectionData = NonNullable<Page['ctaSection']>;
 type NormalizedCta = CtaSectionData & { subtitle?: unknown };
 
-function resolveBackgroundImage(cta: Record<string, unknown>): string | undefined {
-  const raw =
-    cta.backgroundImage ??
-    cta.image ??
-    (Array.isArray(cta.mediaItems) && (cta.mediaItems[0] as { url?: string })?.url);
-
+function resolveMediaUrl(raw: unknown): string | undefined {
   if (!raw) return undefined;
-  if (typeof raw === 'string') return getImageSrc(raw);
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    return trimmed ? getImageSrc(trimmed) : undefined;
+  }
   if (typeof raw === 'object' && raw !== null && 'url' in raw) {
-    const url = (raw as { url?: string }).url;
+    const url = (raw as { url?: string }).url?.trim();
     return url ? getImageSrc(url) : undefined;
   }
+  return undefined;
+}
+
+function resolveBackgroundImage(cta: Record<string, unknown>): string | undefined {
+  const mediaItems = Array.isArray(cta.mediaItems) ? cta.mediaItems : [];
+
+  // Prefer real image sources; empty-string backgroundImage from the builder
+  // must not block fallback to mediaItems.
+  const candidates: unknown[] = [
+    cta.backgroundImage,
+    cta.image,
+    mediaItems[0],
+    (mediaItems[0] as { url?: string } | undefined)?.url,
+  ];
+
+  for (const candidate of candidates) {
+    const src = resolveMediaUrl(candidate);
+    if (src) return src;
+  }
+
   return undefined;
 }
 

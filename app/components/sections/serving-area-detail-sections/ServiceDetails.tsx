@@ -1,71 +1,112 @@
 'use client';
 
-import React from 'react';
-import type { Page } from '@/app/lib/types';
-import { CompanyDetailSection } from '@/app/components/sections/CompanyDetailSection';
+import React, { useMemo } from 'react';
+import { tiptapToText } from '@/app/lib/seo';
+import { cn } from '@/app/lib/utils';
+import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
+import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
+import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
 interface ServiceDetailsProps {
   details: unknown;
   className?: string;
 }
 
-type CompanyDetailSectionData = NonNullable<Page['companyDetailSection']>;
+type DetailsData = {
+  title?: unknown;
+  description?: unknown;
+};
 
-function pushDetailBlock(
-  blocks: NonNullable<CompanyDetailSectionData['details']>,
-  title: unknown,
-  description: unknown
-) {
-  if (!title && !description) return;
-  blocks.push({ title, description });
-}
-
-function normalizeCompanyDetailSection(details: unknown): CompanyDetailSectionData | null {
+/**
+ * Service Details on service-area pages: title + description only.
+ * Does NOT render company-detail feature/process/benefit point cards.
+ */
+function normalizeDetailsSection(details: unknown): DetailsData | null {
   if (!details || typeof details !== 'object') return null;
 
   const data = details as Record<string, unknown>;
   if (data.enabled === false) return null;
 
-  const blocks: NonNullable<CompanyDetailSectionData['details']> = [];
-
-  const features = (data.features ?? []) as Array<Record<string, unknown>>;
-  for (const feature of features) {
-    pushDetailBlock(
-      blocks,
-      feature.title,
-      feature.fullDescription ?? feature.shortDescription ?? feature.description
-    );
-  }
-
-  const process = (data.process ?? []) as Array<Record<string, unknown>>;
-  for (const step of process) {
-    pushDetailBlock(blocks, step.title, step.description);
-  }
-
-  const benefits = (data.benefits ?? []) as Array<Record<string, unknown>>;
-  for (const benefit of benefits) {
-    pushDetailBlock(blocks, benefit.title, benefit.description);
-  }
-
   const title = data.title;
   const description = data.description ?? data.subtitle;
 
-  if (!title && !description && blocks.length === 0) return null;
+  if (!title && !description) return null;
 
-  return {
-    enabled: true,
-    title: title as CompanyDetailSectionData['title'],
-    description: description as CompanyDetailSectionData['description'],
-    details: blocks,
-  };
+  return { title, description };
 }
 
-/** Service area details — same layout as site CompanyDetailSection. */
 export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, className }) => {
-  const companyDetailSection = normalizeCompanyDetailSection(details);
-  if (!companyDetailSection) return null;
+  const theme = useEditorialTheme();
+  const primaryColor = theme.primary;
 
-  return <CompanyDetailSection companyDetailSection={companyDetailSection} className={className} />;
+  const section = useMemo(() => normalizeDetailsSection(details), [details]);
+
+  const resolvedHeading = useMemo(
+    () => tiptapToText(section?.title) || 'Service Details',
+    [section?.title]
+  );
+
+  const resolvedDescription = useMemo(
+    () => tiptapToText(section?.description),
+    [section?.description]
+  );
+
+  const { ref: triggerRef, isVisible } = useScrollAnimation<HTMLDivElement>({
+    threshold: 0.12,
+  });
+  const loaded = isVisible;
+
+  if (!section) return null;
+
+  return (
+    <section id="service-details" className={cn(SECTION.wrap, className)}>
+      <EditorialBackdrop primaryColor={primaryColor} />
+      <SectionTopAccent primaryColor={primaryColor} />
+      <div ref={triggerRef} className={SECTION.container}>
+        <div className={SECTION.header}>
+          <div className="min-w-0 lg:col-span-8">
+            <p
+              className={SECTION.label}
+              style={{
+                fontFamily: 'var(--wb-body-font, sans-serif)',
+                color: primaryColor,
+                opacity: loaded ? 1 : 0,
+                transform: loaded ? 'translateY(0)' : 'translateY(20px)',
+                transition: `opacity 0.6s ${EASE}, transform 0.6s ${EASE}`,
+              }}
+            >
+              <span className={SECTION.labelBar} style={{ backgroundColor: primaryColor }} />
+              Service Details
+            </p>
+            <AnimatedHeading
+              title={resolvedHeading}
+              loaded={loaded}
+              baseDelay={0.2}
+              lightSweep
+            />
+            {resolvedDescription && (
+              <p
+                className={`mt-8 max-w-2xl ${SECTION.body}`}
+                style={{
+                  fontFamily: 'var(--wb-body-font, sans-serif)',
+                  opacity: loaded ? 1 : 0,
+                  transform: loaded ? 'translateY(0)' : 'translateY(24px)',
+                  transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
+                  transitionDelay: '0.8s',
+                }}
+              >
+                {resolvedDescription}
+              </p>
+            )}
+          </div>
+          <div className="hidden lg:col-span-4 lg:flex lg:justify-end lg:pt-2">
+            <SectionRail index="07" loaded={loaded} primaryColor={primaryColor} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 };
 
 export default ServiceDetails;

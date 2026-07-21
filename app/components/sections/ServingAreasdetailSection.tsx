@@ -63,12 +63,12 @@ export const ServingAreasdetailSection: React.FC<ServingAreasdetailSectionProps>
         <OurServices services={data.ourServices} pageServiceId={data.pageServiceId} />
       ) : null}
       {data.cta ? <CTA cta={data.cta} /> : null}
-      {data.serviceDetails ? <ServiceDetails details={data.serviceDetails} /> : null}
       {data.serviceOverview != null &&
       typeof data.serviceOverview === 'object' &&
       (data.serviceOverview as { enabled?: boolean }).enabled !== false ? (
         <ServiceOverview overview={data.serviceOverview} />
       ) : null}
+      {data.serviceDetails ? <ServiceDetails details={data.serviceDetails} /> : null}
       {whyChooseUs ? <WhyChooseUs whyChooseUs={whyChooseUs} /> : null}
       {data.faqs ? <FAQs faqs={data.faqs} /> : null}
       {servingAreasEnabled ? <ServingAreas service={servingAreasConfig} /> : null}

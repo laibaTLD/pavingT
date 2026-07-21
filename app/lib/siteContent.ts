@@ -319,11 +319,34 @@ export function getPrimaryHeroImageFromPages(pages?: Page[]): string {
 
 export function getPrimaryHeroImageFromHero(hero?: Page['hero']): string {
   if (!hero) return '';
-  const h = hero as Page['hero'] & { images?: unknown[] };
-  const raw = h.mediaItems?.[0] || h.images?.[0] || hero.media;
-  if (!raw) return '';
-  if (typeof raw === 'string') return getImageSrc(raw);
-  const o = raw as { url?: string; image?: { url?: string } };
-  const url = o.url || o.image?.url;
-  return url ? getImageSrc(url) : '';
+  const h = hero as Page['hero'] & {
+    images?: unknown[];
+    backgroundImage?: string | { url?: string };
+  };
+
+  // Builder service-area heroes often put the image in `backgroundImage` (string path)
+  // rather than mediaItems / media.
+  const candidates: unknown[] = [
+    h.mediaItems?.[0],
+    h.images?.[0],
+    hero.media,
+    h.backgroundImage,
+  ];
+
+  for (const raw of candidates) {
+    if (!raw) continue;
+    if (typeof raw === 'string') {
+      const src = getImageSrc(raw.trim());
+      if (src) return src;
+      continue;
+    }
+    const o = raw as { url?: string; image?: { url?: string } };
+    const url = o.url || o.image?.url;
+    if (url?.trim()) {
+      const src = getImageSrc(url.trim());
+      if (src) return src;
+    }
+  }
+
+  return '';
 }

@@ -7,7 +7,7 @@ import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { tiptapToText, tiptapToLines } from '@/app/lib/seo';
 import { getPrimaryHeroImageFromHero } from '@/app/lib/siteContent';
 import { resolvePrimaryCta } from '@/app/components/ui/made';
-import { cn } from '@/app/lib/utils';
+import { cn, getImageSrc } from '@/app/lib/utils';
 import { EASE, ENTRANCE, splitTitleLines, TitlePart } from '@/components/AnimatedTitle';
 import { getHighResImageUrl, HERO_IMAGE_QUALITY, HERO_IMAGE_SIZES } from '@/lib/images';
 import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
@@ -23,6 +23,8 @@ interface HeroSectionProps {
   description?: string;
   ctaButton?: { href: string; label: string };
   backgroundImage?: string;
+  /** When true, skip scale/parallax zoom so the hero photo stays sharp (service areas). */
+  preserveImageQuality?: boolean;
 }
 
 function FloatingParticles({
@@ -78,7 +80,11 @@ function resolveHeroImage(hero?: Page['hero']): string {
   const fromHelper = getPrimaryHeroImageFromHero(hero);
   if (fromHelper) return fromHelper;
   const media = hero?.media;
-  if (media?.url) return media.url;
+  if (media?.url) return getImageSrc(media.url);
+  const bg = (hero as Page['hero'] & { backgroundImage?: string | { url?: string } })
+    ?.backgroundImage;
+  if (typeof bg === 'string' && bg.trim()) return getImageSrc(bg.trim());
+  if (bg && typeof bg === 'object' && bg.url) return getImageSrc(bg.url);
   return '';
 }
 
@@ -110,6 +116,7 @@ export function HeroSection({
   description,
   ctaButton,
   backgroundImage,
+  preserveImageQuality = false,
 }: HeroSectionProps) {
   const { site, pages } = useWebBuilder();
   const theme = useEditorialTheme();
@@ -195,11 +202,13 @@ export function HeroSection({
   }, []);
 
   const textTransform = anim ? `translate3d(${mouse.x * 5}px, ${mouse.y * 5}px, 0)` : undefined;
-  const imageTransform = anim
-    ? loaded
-      ? `translate3d(${mouse.x * 10}px, ${mouse.y * 10}px, 0) translateY(0) scale(1.02)`
-      : 'translateY(30px) scale(0.96)'
-    : undefined;
+  const imageTransform = preserveImageQuality
+    ? undefined
+    : anim
+      ? loaded
+        ? `translate3d(${mouse.x * 10}px, ${mouse.y * 10}px, 0) translateY(0) scale(1.02)`
+        : 'translateY(30px) scale(0.96)'
+      : undefined;
   const panelSlide = anim ? (loaded ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)';
 
   if (hero?.enabled === false) return null;
@@ -232,7 +241,11 @@ export function HeroSection({
                 fill
                 priority
                 quality={HERO_IMAGE_QUALITY}
-                sizes={HERO_IMAGE_SIZES}
+                sizes={
+                  preserveImageQuality
+                    ? '(max-width: 768px) 100vw, (max-width: 1280px) 70vw, 1200px'
+                    : HERO_IMAGE_SIZES
+                }
                 className="object-cover object-center"
               />
             ) : (

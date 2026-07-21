@@ -2,32 +2,27 @@
 
 import { useMemo } from 'react';
 import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
-import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { useSectionTheme } from '@/app/hooks/useSectionTheme';
-import { cn, getImageSrc } from '@/app/lib/utils';
 import { tiptapToText } from '@/app/lib/seo';
+import { cn, getImageSrc } from '@/app/lib/utils';
+import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
+import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
+import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { themeSurface } from '@/lib/theme';
+import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
 interface ServiceOverviewProps {
   overview: unknown;
   className?: string;
 }
 
-type OverviewService = {
-  name: string;
-  description: string;
-  price?: string;
+type OverviewData = {
+  title?: unknown;
+  description?: unknown;
   imageUrl?: string;
   imageAlt?: string;
 };
 
-type OverviewData = {
-  title?: unknown;
-  description?: unknown;
-  image?: { url: string; altText?: string };
-  services: OverviewService[];
-};
-
-function normalizeImage(raw: unknown): OverviewData['image'] | undefined {
+function normalizeImage(raw: unknown): { url: string; altText?: string } | undefined {
   if (!raw) return undefined;
   if (typeof raw === 'string' && raw.trim()) return { url: raw.trim() };
   if (typeof raw === 'object' && raw !== null && 'url' in raw) {
@@ -37,39 +32,7 @@ function normalizeImage(raw: unknown): OverviewData['image'] | undefined {
   return undefined;
 }
 
-function normalizeServiceItem(item: unknown): OverviewService | null {
-  if (!item || typeof item !== 'object') return null;
-  const record = item as Record<string, unknown>;
-
-  const name =
-    (typeof record.name === 'string' && record.name.trim()) ||
-    (typeof record.title === 'string' && record.title.trim()) ||
-    '';
-  if (!name) return null;
-
-  const description =
-    tiptapToText(record.description) ||
-    tiptapToText(record.shortDescription) ||
-    (typeof record.summary === 'string' ? record.summary.trim() : '');
-
-  const price = typeof record.price === 'string' ? record.price.trim() : undefined;
-
-  let imageUrl: string | undefined;
-  let imageAlt: string | undefined;
-  const image = record.image;
-  if (typeof image === 'string' && image.trim()) {
-    imageUrl = getImageSrc(image.trim());
-  } else if (image && typeof image === 'object' && 'url' in image) {
-    const img = image as { url?: string; altText?: string };
-    if (img.url?.trim()) {
-      imageUrl = getImageSrc(img.url.trim());
-      imageAlt = img.altText?.trim();
-    }
-  }
-
-  return { name, description, price, imageUrl, imageAlt: imageAlt || name };
-}
-
+/** Overview title / description / image only — no feature-point cards. */
 function normalizeOverviewSection(overview: unknown): OverviewData | null {
   if (!overview || typeof overview !== 'object') return null;
 
@@ -78,208 +41,115 @@ function normalizeOverviewSection(overview: unknown): OverviewData | null {
 
   const title = data.title;
   const description = data.description ?? data.subtitle ?? data.secondaryDescription;
-  const image = normalizeImage(data.image);
+  const image = normalizeImage(data.image ?? data.backgroundImage ?? data.media);
 
-  const rawList = data.services ?? data.items ?? data.highlights;
-  const services: OverviewService[] = [];
-  if (Array.isArray(rawList)) {
-    for (const item of rawList) {
-      const normalized = normalizeServiceItem(item);
-      if (normalized) services.push(normalized);
-    }
-  }
+  if (!title && !description && !image) return null;
 
-  if (!title && !description && !image && services.length === 0) return null;
-
-  return { title, description, image, services };
-}
-
-function hasRichContent(content: unknown): boolean {
-  if (content == null || content === '') return false;
-  if (typeof content === 'object') return Boolean(tiptapToText(content));
-  return Boolean(String(content).trim());
+  return {
+    title,
+    description,
+    imageUrl: image?.url ? getImageSrc(image.url) : undefined,
+    imageAlt: image?.altText?.trim() || undefined,
+  };
 }
 
 export const ServiceOverview: React.FC<ServiceOverviewProps> = ({ overview, className }) => {
-  const theme = useSectionTheme();
-  const { colors, fonts } = theme;
+  const theme = useEditorialTheme();
+  const primaryColor = theme.primary;
+  const borderTint = themeSurface(primaryColor, 0.2);
 
   const section = useMemo(() => normalizeOverviewSection(overview), [overview]);
 
-  const titleText = useMemo(() => tiptapToText(section?.title), [section?.title]);
-  const descriptionText = useMemo(
+  const resolvedHeading = useMemo(
+    () => tiptapToText(section?.title) || 'Service Overview',
+    [section?.title]
+  );
+
+  const resolvedDescription = useMemo(
     () => tiptapToText(section?.description),
     [section?.description]
   );
-  const headerImage = useMemo(() => {
-    const url = section?.image?.url;
-    return url ? getImageSrc(url) : undefined;
-  }, [section?.image?.url]);
+
+  const { ref: triggerRef, isVisible } = useScrollAnimation<HTMLDivElement>({
+    threshold: 0.12,
+  });
+  const loaded = isVisible;
 
   if (!section) return null;
 
-  const showTitle = hasRichContent(section.title) || Boolean(titleText);
-  const showDescription = hasRichContent(section.description) || Boolean(descriptionText);
-  const borderColor = `color-mix(in srgb, ${colors.mainText} 12%, transparent)`;
-
-  const hasTextBlock = showTitle || showDescription;
-  const textOnlyHero = hasTextBlock && !headerImage && section.services.length === 0;
-
   return (
-    <section
-      className={cn('relative border-t', className)}
-      style={{
-        backgroundColor: colors.pageBackground,
-        borderColor,
-        fontFamily: fonts.body,
-      }}
-    >
-      {/* Full-viewport text (+ optional image) */}
-      {hasTextBlock && (
+    <section id="service-overview" className={cn(SECTION.wrap, className)}>
+      <EditorialBackdrop primaryColor={primaryColor} />
+      <SectionTopAccent primaryColor={primaryColor} />
+      <div ref={triggerRef} className={SECTION.container}>
         <div
           className={cn(
-            'grid min-h-[100svh]',
-            headerImage ? 'lg:grid-cols-2' : 'lg:grid-cols-1'
+            'grid grid-cols-1 items-center gap-8 lg:gap-12',
+            section.imageUrl ? 'lg:grid-cols-12' : ''
           )}
         >
-          <header
-            className={cn(
-              'flex flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-20 py-16 sm:py-20',
-              'min-h-[100svh]',
-              textOnlyHero && 'mx-auto w-full max-w-4xl'
-            )}
-          >
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] mb-6" style={{ fontFamily: fonts.body }}>
-              <span style={{ color: colors.secondaryText }}>[ </span>
-              <span style={{ color: colors.mainText }}>Overview</span>
-              <span style={{ color: colors.secondaryText }}> ]</span>
+          <div className={cn('min-w-0', section.imageUrl ? 'lg:col-span-6' : 'lg:col-span-8')}>
+            <p
+              className={SECTION.label}
+              style={{
+                fontFamily: 'var(--wb-body-font, sans-serif)',
+                color: primaryColor,
+                opacity: loaded ? 1 : 0,
+                transform: loaded ? 'translateY(0)' : 'translateY(20px)',
+                transition: `opacity 0.6s ${EASE}, transform 0.6s ${EASE}`,
+              }}
+            >
+              <span className={SECTION.labelBar} style={{ backgroundColor: primaryColor }} />
+              Service Overview
             </p>
-
-            {showTitle && (
-              <h2
-                className="text-[clamp(1.75rem,3.5vw,3rem)] font-normal leading-[1.12] tracking-tight max-w-3xl"
-                style={{ fontFamily: fonts.heading, color: colors.mainText }}
-              >
-                {hasRichContent(section.title) ? (
-                  <TiptapRenderer content={section.title} as="inline" />
-                ) : (
-                  titleText
-                )}
-              </h2>
-            )}
-
-            {showDescription && hasRichContent(section.description) && (
-              <div
-                className={cn(
-                  'mt-6 sm:mt-8 text-base sm:text-lg font-light leading-relaxed max-w-2xl',
-                  !showTitle && 'mt-0'
-                )}
-                style={{ color: colors.secondaryText }}
-              >
-                <TiptapRenderer content={section.description} />
-              </div>
-            )}
-
-            {showDescription && !hasRichContent(section.description) && descriptionText && (
+            <AnimatedHeading
+              title={resolvedHeading}
+              loaded={loaded}
+              baseDelay={0.2}
+              lightSweep
+            />
+            {resolvedDescription && (
               <p
-                className={cn(
-                  'mt-6 sm:mt-8 text-base sm:text-lg font-light leading-relaxed max-w-2xl',
-                  !showTitle && 'mt-0'
-                )}
-                style={{ color: colors.secondaryText }}
+                className={`mt-8 max-w-xl ${SECTION.body}`}
+                style={{
+                  fontFamily: 'var(--wb-body-font, sans-serif)',
+                  opacity: loaded ? 1 : 0,
+                  transform: loaded ? 'translateY(0)' : 'translateY(24px)',
+                  transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
+                  transitionDelay: '0.8s',
+                }}
               >
-                {descriptionText}
+                {resolvedDescription}
               </p>
             )}
-          </header>
+          </div>
 
-          {headerImage && (
-            <div className="relative min-h-[45vh] lg:min-h-[100svh] order-first lg:order-none">
-              <div className="absolute inset-0 overflow-hidden">
-                <OptimizedImage
-                  src={headerImage}
-                  alt={section.image?.altText?.trim() || titleText || 'Service overview'}
-                  fill
-                  sizes={IMAGE_SIZES.sectionWide}
-                  className="object-cover"
-                />
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background: `linear-gradient(to right, color-mix(in srgb, ${colors.pageBackground} 30%, transparent), transparent 40%)`,
-                  }}
-                />
-              </div>
+          {section.imageUrl ? (
+            <div
+              className="relative aspect-[4/3] w-full overflow-hidden border sm:aspect-[16/11] lg:col-span-6 lg:aspect-auto lg:min-h-[360px]"
+              style={{
+                borderColor: borderTint,
+                opacity: loaded ? 1 : 0,
+                transform: loaded ? 'translateY(0)' : 'translateY(24px)',
+                transition: `opacity 0.85s ${EASE}, transform 0.85s ${EASE}`,
+                transitionDelay: '0.45s',
+              }}
+            >
+              <OptimizedImage
+                src={section.imageUrl}
+                alt={section.imageAlt || resolvedHeading}
+                fill
+                className="object-cover object-center"
+                sizes={IMAGE_SIZES.sectionHalf}
+              />
+            </div>
+          ) : (
+            <div className="hidden lg:col-span-4 lg:flex lg:justify-end lg:pt-2">
+              <SectionRail index="06" loaded={loaded} primaryColor={primaryColor} />
             </div>
           )}
         </div>
-      )}
-
-      {section.services.length > 0 && (
-        <div className="mx-auto w-full max-w-[90rem] px-6 md:px-12 lg:px-16 xl:px-20 py-16 sm:py-20 lg:py-24 border-t" style={{ borderColor }}>
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {section.services.map((service, index) => {
-                const number = String(index + 1).padStart(2, '0');
-
-                return (
-                  <li
-                    key={`${service.name}-${index}`}
-                    className="flex flex-col rounded-sm border p-6 sm:p-7 transition-shadow hover:shadow-md"
-                    style={{
-                      borderColor,
-                      backgroundColor: colors.pageBackground,
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <span
-                        className="text-xs tabular-nums font-medium"
-                        style={{ color: colors.secondaryText, opacity: 0.6 }}
-                      >
-                        {number}
-                      </span>
-                      {service.price && (
-                        <span
-                          className="text-xs font-medium uppercase tracking-wider shrink-0"
-                          style={{ color: colors.primaryButton }}
-                        >
-                          {service.price}
-                        </span>
-                      )}
-                    </div>
-
-                    {service.imageUrl && (
-                      <div className="relative aspect-[16/10] mb-4 overflow-hidden rounded-sm">
-                        <OptimizedImage
-                          src={service.imageUrl}
-                          alt={service.imageAlt || service.name}
-                          fill
-                          sizes={IMAGE_SIZES.card}
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-
-                    <h3
-                      className="text-lg sm:text-xl leading-snug"
-                      style={{ fontFamily: fonts.heading, color: colors.mainText }}
-                    >
-                      {service.name}
-                    </h3>
-
-                    {service.description && (
-                      <p
-                        className="mt-2 text-sm sm:text-base leading-relaxed flex-1"
-                        style={{ color: colors.secondaryText }}
-                      >
-                        {service.description}
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
-          </ul>
-        </div>
-      )}
+      </div>
     </section>
   );
 };
