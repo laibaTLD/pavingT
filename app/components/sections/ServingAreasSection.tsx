@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Page, Service, ServiceAreaPage } from '@/app/lib/types';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { getBusinessTagline } from '@/app/lib/siteContent';
@@ -15,9 +15,8 @@ import {
   normalizeSlug,
   resolveServiceSlug,
 } from '@/app/lib/serviceAreaSlugs';
-import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
-import { AnimatedHeading, EASE, ENTRANCE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
@@ -63,6 +62,9 @@ function areaKey(area: Pick<DisplayArea, 'city' | 'region'>): string {
   return `${area.city.toLowerCase()}|${area.region.toLowerCase()}`;
 }
 
+/** Cities hidden from the serving-areas grid (CMS orphans / unwanted pages). */
+const EXCLUDED_AREA_CITIES = new Set(['north bend']);
+
 function enrichArea(
   area: Omit<DisplayArea, 'href' | 'serviceSlug'>,
   serviceSlug: string,
@@ -80,14 +82,17 @@ export function buildServiceAreas(
 ): DisplayArea[] {
   const result: DisplayArea[] = [];
   const seen = new Set<string>();
+  const safeServices = Array.isArray(services) ? services : [];
+  const safePages = Array.isArray(serviceAreaPages) ? serviceAreaPages : [];
 
   const addArea = (area: unknown, serviceSlug: string) => {
     const normalized = normalizeServiceArea(area);
     if (!normalized) return;
+    if (EXCLUDED_AREA_CITIES.has(normalized.city.toLowerCase())) return;
     const key = areaKey(normalized);
     if (seen.has(key)) return;
     seen.add(key);
-    result.push(enrichArea(normalized, serviceSlug, serviceAreaPages));
+    result.push(enrichArea(normalized, serviceSlug, safePages));
   };
 
   const resolveSlugForPage = (page: ServiceAreaPage): string => {
@@ -96,64 +101,53 @@ export function buildServiceAreas(
       return resolveServiceSlug({ slug: serviceRef.slug });
     }
     if (typeof serviceRef === 'string') {
-      const svc = services.find((s) => s._id === serviceRef);
+      const svc = safeServices.find((s) => s._id === serviceRef);
       if (svc) return resolveServiceSlug(svc);
     }
     return 'service';
   };
 
-  const addAreasFromServiceAreaPages = (filterPublished = true) => {
-    serviceAreaPages.forEach((page) => {
-      if (filterPublished && page.status !== 'published') return;
-      if (!page.city?.trim()) return;
-      addArea({ city: page.city, region: page.region }, resolveSlugForPage(page));
-    });
-  };
-
-  const addAreasFromServiceAreaPagesForSlug = (slug: string, filterPublished = true) => {
-    const normSlug = normalizeSlug(slug);
-    serviceAreaPages.forEach((page) => {
-      if (filterPublished && page.status !== 'published') return;
-      if (!page.city?.trim()) return;
-      const pageSlug = getServiceSlugFromAreaPage(page) || resolveSlugForPage(page);
-      if (normalizeSlug(pageSlug) !== normSlug) return;
-      addArea({ city: page.city, region: page.region }, normSlug);
-    });
-  };
-
-  const sectionSlug = servingAreasSection?.serviceSlug?.trim();
-  if (sectionSlug) {
-    const normSectionSlug = normalizeSlug(sectionSlug);
-    const match = services.find((s) => resolveServiceSlug(s) === normSectionSlug);
-    const slug = match ? resolveServiceSlug(match) : normSectionSlug;
-
-    addAreasFromServiceAreaPagesForSlug(slug, true);
-    if (result.length === 0) addAreasFromServiceAreaPagesForSlug(slug, false);
-    if (result.length === 0) {
-      (match?.serviceAreas ?? []).forEach((area) => addArea(area, slug));
-    }
-    return result;
-  }
-
-  addAreasFromServiceAreaPages(true);
-  if (result.length > 0) return result;
-
-  const visibleServices = services.filter(isVisibleService);
-  for (const service of visibleServices) {
-    const slug = resolveServiceSlug(service);
-    (service.serviceAreas ?? []).forEach((area) => addArea(area, slug));
-  }
-  if (result.length > 0) return result;
-
+  const visibleServices = safeServices.filter(isVisibleService);
   const defaultSlug = visibleServices[0]
     ? resolveServiceSlug(visibleServices[0])
-    : services[0]
-      ? resolveServiceSlug(services[0])
+    : safeServices[0]
+      ? resolveServiceSlug(safeServices[0])
       : 'service';
-  (siteServiceAreas ?? []).forEach((area) => addArea(area, defaultSlug));
-  if (result.length > 0) return result;
 
-  addAreasFromServiceAreaPages(false);
+  const sectionSlug = servingAreasSection?.serviceSlug?.trim();
+  const scopedSlug = sectionSlug
+    ? (() => {
+        const norm = normalizeSlug(sectionSlug);
+        const match = safeServices.find((s) => resolveServiceSlug(s) === norm);
+        return match ? resolveServiceSlug(match) : norm;
+      })()
+    : null;
+
+  // On home, service-area CMS pages are href enrichment only — not a city source
+  // (orphan pages like North Bend were injecting extra cards).
+  // On scoped service sections, include that service's area pages.
+  if (scopedSlug) {
+    safePages.forEach((page) => {
+      if (page.status === 'draft' || page.status === 'archived') return;
+      if (!page.city?.trim()) return;
+      const pageSlug = getServiceSlugFromAreaPage(page) || resolveSlugForPage(page);
+      if (normalizeSlug(pageSlug) !== scopedSlug) return;
+      addArea({ city: page.city, region: page.region }, scopedSlug);
+    });
+
+    const match = safeServices.find((s) => resolveServiceSlug(s) === scopedSlug);
+    (match?.serviceAreas ?? []).forEach((area) => addArea(area, scopedSlug));
+  } else {
+    for (const service of visibleServices) {
+      const slug = resolveServiceSlug(service);
+      (service.serviceAreas ?? []).forEach((area) => addArea(area, slug));
+    }
+  }
+
+  (siteServiceAreas ?? []).forEach((area) =>
+    addArea(area, scopedSlug || defaultSlug)
+  );
+
   return result;
 }
 
@@ -177,6 +171,14 @@ export function ServingAreasSection({
     [servingAreasSection, services, serviceAreaPages, site?.serviceAreas]
   );
 
+  // Keep last non-empty list only for empty flashes during load.
+  const stableAreasRef = useRef<DisplayArea[]>([]);
+  if (serviceAreas.length > 0) {
+    stableAreasRef.current = serviceAreas;
+  }
+  const displayAreas =
+    serviceAreas.length > 0 ? serviceAreas : stableAreasRef.current;
+
   const resolvedTitle = useMemo(
     () => tiptapToText(servingAreasSection?.title) || 'Areas We Serve',
     [servingAreasSection?.title]
@@ -190,40 +192,42 @@ export function ServingAreasSection({
     [servingAreasSection?.description, site]
   );
 
-  const { ref: triggerRef, isVisible } = useScrollAnimation<HTMLDivElement>({
-    threshold: 0.12,
-  });
-  const loaded = isVisible;
+  // Content stays visible — scroll-reveal opacity was resetting when secondary
+  // API data arrived ~3–4s after reload (Lenis/layout refresh + remount).
+  const loaded = true;
 
-  const INITIAL_VISIBLE = 3;
+  // Fill at least 3 rows of a 4-col grid before collapsing behind "Show more".
+  const INITIAL_VISIBLE = 12;
   const [listExpanded, setListExpanded] = useState(false);
-  const hasMoreAreas = serviceAreas.length > INITIAL_VISIBLE;
+  const hasMoreAreas = displayAreas.length > INITIAL_VISIBLE;
   const visibleAreas = listExpanded
-    ? serviceAreas
-    : serviceAreas.slice(0, INITIAL_VISIBLE);
+    ? displayAreas
+    : displayAreas.slice(0, INITIAL_VISIBLE);
 
   const borderTint = themeSurface(primaryColor, 0.22);
   const gridColClass =
-    serviceAreas.length >= 3
-      ? 'sm:grid-cols-2 lg:grid-cols-3'
-      : 'sm:grid-cols-2';
+    displayAreas.length >= 4
+      ? 'sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+      : displayAreas.length >= 3
+        ? 'sm:grid-cols-2 lg:grid-cols-3'
+        : 'sm:grid-cols-2';
 
   const uniqueRegions = useMemo(
     () =>
-      [...new Set(serviceAreas.map((a) => a.region).filter(Boolean))] as string[],
-    [serviceAreas]
+      [...new Set(displayAreas.map((a) => a.region).filter(Boolean))] as string[],
+    [displayAreas]
   );
 
   if (servingAreasSection?.enabled === false) return null;
-  if (!serviceAreas.length) return null;
+  if (!displayAreas.length) return null;
 
   return (
-    <section id="service-areas" className={cn(SECTION.wrap, className)}>
+    <section id="service-areas" className={cn(SECTION.wrap, 'overflow-visible', className)}>
       <EditorialBackdrop primaryColor={primaryColor} />
       <SectionTopAccent primaryColor={primaryColor} />
-      <div ref={triggerRef} className={SECTION.container}>
+      <div className={SECTION.container}>
         <div className={SECTION.header}>
-          <div className="lg:col-span-8 min-w-0">
+          <div className="min-w-0 lg:col-span-12">
             <p
               className={SECTION.label}
               style={{
@@ -259,26 +263,21 @@ export function ServingAreasSection({
               {resolvedDescription}
             </p>
           </div>
-          <div className="hidden lg:flex lg:col-span-4 lg:justify-end lg:pt-2">
-            <SectionRail index="12" loaded={loaded} primaryColor={primaryColor} />
-          </div>
         </div>
 
-        <div className={`${SECTION.content} grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10 lg:items-start`}>
-          <aside
-            className="lg:col-span-3 lg:sticky lg:top-28"
-            style={{
-              opacity: loaded ? 1 : 0,
-              transform: loaded ? 'translateY(0)' : 'translateY(20px)',
-              transition: `opacity 0.7s ${EASE}, transform 0.7s ${EASE}`,
-              transitionDelay: '0.6s',
-            }}
-          >
+        <div
+          className={`${SECTION.content} grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start lg:gap-10`}
+        >
+          {/* Sticky must not use transform — transform creates a containing block. */}
+          <aside className="lg:sticky lg:top-[calc(var(--wb-header-height)+1.25rem)] lg:col-span-3 lg:self-start">
             <div
               className="border p-6 md:p-7"
               style={{
                 borderColor: borderTint,
                 backgroundColor: themeSurface(primaryColor, 0.04),
+                opacity: loaded ? 1 : 0,
+                transition: `opacity 0.7s ${EASE}`,
+                transitionDelay: '0.35s',
               }}
             >
               <p
@@ -291,13 +290,13 @@ export function ServingAreasSection({
                 className="mt-3 text-4xl tabular-nums leading-none text-[var(--wb-text-main)] md:text-5xl"
                 style={{ fontFamily: 'var(--wb-heading-font, Georgia, serif)' }}
               >
-                {serviceAreas.length}
+                {displayAreas.length}
               </p>
               <p
                 className="mt-1 text-sm text-[var(--wb-text-secondary)]"
                 style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
               >
-                {serviceAreas.length === 1 ? 'community served' : 'communities served'}
+                {displayAreas.length === 1 ? 'community served' : 'communities served'}
               </p>
               {uniqueRegions.length > 0 && (
                 <div className="mt-6 border-t pt-6" style={{ borderColor: borderTint }}>
@@ -328,36 +327,30 @@ export function ServingAreasSection({
 
           <div className="min-w-0 lg:col-span-9">
             <div
-              className={`grid grid-cols-1 ${gridColClass} gap-0 border-t border-l`}
-              style={{ borderColor: borderTint }}
+              className={`grid grid-cols-1 ${gridColClass} gap-3 sm:gap-4`}
+              style={{
+                opacity: loaded ? 1 : 0,
+                transition: `opacity 0.7s ${EASE}`,
+                transitionDelay: '0.25s',
+              }}
             >
               {visibleAreas.map((area, i) => {
-                const fromLeft = i % 2 === 0;
-                const cardDelay = 0.5 + i * 0.07;
-
+                const cardHref = '/serving-areas';
                 const card = (
                   <article
-                    className="group relative border-r border-b bg-[color-mix(in_srgb,var(--wb-card-bg-light)_55%,transparent)] p-5 transition-colors duration-300 hover:bg-[var(--wb-card-bg-light)] md:p-6"
-                    style={{
-                      borderColor: borderTint,
-                      clipPath: loaded
-                        ? 'inset(0 0 0 0)'
-                        : fromLeft
-                          ? 'inset(0 100% 0 0)'
-                          : 'inset(0 0 0 100%)',
-                      opacity: loaded ? 1 : 0,
-                      transform: loaded ? 'translateY(0)' : 'translateY(16px)',
-                      transition: `clip-path ${ENTRANCE} ${EASE}, opacity 0.7s ${EASE}, transform 0.7s ${EASE}, background-color 0.35s ease`,
-                      transitionDelay: `${cardDelay}s`,
-                    }}
+                    className={cn(
+                      'relative h-full border bg-[color-mix(in_srgb,var(--wb-card-bg-light)_55%,transparent)] px-3.5 py-3.5 transition-colors duration-300 md:px-4 md:py-4',
+                      'cursor-pointer hover:bg-[var(--wb-card-bg-light)] group-hover:bg-[var(--wb-card-bg-light)]'
+                    )}
+                    style={{ borderColor: borderTint, borderWidth: '1px' }}
                   >
                     <div
-                      className="absolute top-0 left-0 h-[2px] w-0 transition-all duration-500 group-hover:w-full"
+                      className="absolute left-0 top-0 h-[2px] w-0 transition-all duration-500 group-hover:w-full"
                       style={{ backgroundColor: primaryColor }}
                     />
 
                     <span
-                      className="pointer-events-none absolute bottom-3 right-4 select-none text-3xl font-normal leading-none"
+                      className="pointer-events-none absolute bottom-2.5 right-3 select-none text-2xl font-normal leading-none"
                       style={{
                         fontFamily: 'var(--wb-heading-font, Georgia, serif)',
                         color: themeSurface(primaryColor, 0.1),
@@ -368,12 +361,12 @@ export function ServingAreasSection({
                     </span>
 
                     <div
-                      className="mb-4 inline-flex h-9 w-9 items-center justify-center border text-[var(--wb-text-secondary)] transition-colors duration-300 group-hover:text-[var(--wb-text-main)]"
+                      className="mb-3 inline-flex h-8 w-8 items-center justify-center border text-[var(--wb-text-secondary)] transition-colors duration-300 group-hover:border-[var(--wb-primary)] group-hover:text-[var(--wb-text-main)]"
                       style={{ borderColor: themeSurface(primaryColor, 0.25) }}
                     >
                       <svg
-                        width="16"
-                        height="16"
+                        width="14"
+                        height="14"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -387,42 +380,41 @@ export function ServingAreasSection({
                       </svg>
                     </div>
 
-                    {area.region && (
+                    {area.region ? (
                       <p
                         className="text-[10px] uppercase tracking-[0.18em] text-[var(--wb-text-secondary)]"
                         style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
                       >
                         {area.region}
                       </p>
-                    )}
+                    ) : null}
+
                     <h3
-                      className="relative z-10 mt-1 text-base font-normal leading-snug text-[var(--wb-text-main)] md:text-lg"
+                      className="relative z-10 mt-1 text-sm font-normal leading-snug text-[var(--wb-text-main)] md:text-base"
                       style={{ fontFamily: 'var(--wb-heading-font, Georgia, serif)' }}
                     >
                       {area.city}
                     </h3>
 
-                    {area.href && (
-                      <span
-                        className="relative z-10 mt-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
-                        style={{
-                          fontFamily: 'var(--wb-body-font, sans-serif)',
-                          color: primaryColor,
-                        }}
-                      >
-                        View area
-                        <span aria-hidden="true">→</span>
-                      </span>
-                    )}
+                    <span
+                      className="relative z-10 mt-3 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--wb-text-main)] transition-all duration-300 group-hover:translate-x-0.5"
+                      style={{ fontFamily: 'var(--wb-body-font, sans-serif)' }}
+                    >
+                      Explore areas
+                      <span aria-hidden="true">→</span>
+                    </span>
                   </article>
                 );
 
-                return area.href ? (
-                  <Link key={areaKey(area)} href={area.href} className="block">
+                return (
+                  <Link
+                    key={areaKey(area)}
+                    href={cardHref}
+                    className="group block h-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]"
+                    style={{ outlineColor: primaryColor }}
+                  >
                     {card}
                   </Link>
-                ) : (
-                  <div key={areaKey(area)}>{card}</div>
                 );
               })}
             </div>
@@ -440,12 +432,12 @@ export function ServingAreasSection({
                   color: 'var(--wb-text-main)',
                 }}
               >
-                <span>{listExpanded ? 'Show less' : 'Show more serving areas'}</span>
-                <span
-                  className="text-base"
-                  style={{ color: primaryColor }}
-                  aria-hidden="true"
-                >
+                <span>
+                  {listExpanded
+                    ? 'Show less'
+                    : `Show ${displayAreas.length - INITIAL_VISIBLE} more serving areas`}
+                </span>
+                <span className="text-base" style={{ color: primaryColor }} aria-hidden="true">
                   {listExpanded ? '↑' : '↓'}
                 </span>
               </button>

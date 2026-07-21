@@ -12,7 +12,7 @@ import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage'
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { useParallaxMouse } from '@/hooks/useParallaxMouse';
 import { AnimatedHeading, EASE, ENTRANCE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
@@ -125,7 +125,7 @@ export function AboutSection({ aboutSection, page, className }: AboutSectionProp
 
       <div ref={triggerRef} className={SECTION.container}>
         <div className={SECTION.header}>
-          <div className="min-w-0 lg:col-span-8">
+          <div className="min-w-0 lg:col-span-12">
             <p
               className={SECTION.label}
               style={{
@@ -145,10 +145,7 @@ export function AboutSection({ aboutSection, page, className }: AboutSectionProp
               baseDelay={0.2}
               lightSweep
             />
-          </div>
-          <div className="hidden lg:flex lg:col-span-4 lg:justify-end lg:pt-2">
-            <SectionRail index="02" loaded={loaded} primaryColor={primaryColor} />
-          </div>
+          </div>
         </div>
 
         <div className={`${SECTION.content} grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center lg:gap-10`}>

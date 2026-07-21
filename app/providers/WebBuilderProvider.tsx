@@ -135,49 +135,52 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({
 
   const loadServicesBySiteSlug = async (siteSlug: string) => {
     try {
-      const servicesData = await serviceApi.getServicesBySite(siteSlug);
+      const servicesData = await serviceApi.getServicesBySite(siteSlug, { silent: true });
+      if (!Array.isArray(servicesData)) return;
       setServices(servicesData);
-    } catch (err) {
-      console.warn('Failed to load services:', err instanceof Error ? err.message : 'Unknown error');
+    } catch {
+      /* secondary content — soft-fail; keep previous */
     }
   };
 
   const loadBlogPosts = async (siteSlug: string, limit?: number) => {
     try {
-      const postsData = await blogApi.getPostsBySite(siteSlug, limit);
+      const postsData = await blogApi.getPostsBySite(siteSlug, limit, { silent: true });
+      if (!Array.isArray(postsData)) return;
       setBlogPosts(postsData);
-    } catch (err) {
-      console.warn('Failed to load blog posts:', err instanceof Error ? err.message : 'Unknown error');
+    } catch {
+      /* secondary content — soft-fail; keep previous */
     }
   };
 
   const loadProjects = async (siteSlug: string, limit?: number) => {
     try {
-      const projectsData = await projectApi.getProjectsBySite(siteSlug, limit);
+      const projectsData = await projectApi.getProjectsBySite(siteSlug, limit, { silent: true });
+      if (!Array.isArray(projectsData)) return;
       setProjects(projectsData);
-    } catch (err) {
-      console.warn('Failed to load projects:', err instanceof Error ? err.message : 'Unknown error');
+    } catch {
+      /* secondary content — soft-fail; keep previous */
     }
   };
 
   const loadTestimonials = async (siteSlug: string) => {
     try {
-      const testimonialsData = await testimonialApi.getTestimonialsBySite(siteSlug);
+      const testimonialsData = await testimonialApi.getTestimonialsBySite(siteSlug, { silent: true });
       setTestimonials(testimonialsData);
-    } catch (err) {
-      console.warn(
-        '[WebBuilderProvider] Failed to load testimonials:',
-        err instanceof Error ? err.message : err
-      );
+    } catch {
+      /* secondary content — soft-fail; keep previous */
     }
   };
 
   const loadServiceAreaPages = async (siteSlug: string) => {
     try {
-      const serviceAreaPagesData = await serviceAreaApi.getServiceAreaPagesBySite(siteSlug);
+      const serviceAreaPagesData = await serviceAreaApi.getServiceAreaPagesBySite(siteSlug, {
+        silent: true,
+      });
+      if (!Array.isArray(serviceAreaPagesData)) return;
       setServiceAreaPages(serviceAreaPagesData);
-    } catch (err) {
-      console.warn('Failed to load service area pages:', err instanceof Error ? err.message : 'Unknown error');
+    } catch {
+      /* secondary content — soft-fail; keep previous (do not wipe with []) */
     }
   };
 
@@ -269,6 +272,7 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({
     const intervalId = setInterval(async () => {
       try {
         const servicesData = await serviceApi.getServicesBySite(site.slug, { silent: true });
+        if (!Array.isArray(servicesData)) return;
         setServices((prevServices) =>
           JSON.stringify(prevServices) !== JSON.stringify(servicesData)
             ? servicesData
@@ -288,6 +292,7 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({
     const intervalId = setInterval(async () => {
       try {
         const data = await serviceAreaApi.getServiceAreaPagesBySite(site.slug, { silent: true });
+        if (!Array.isArray(data)) return;
         setServiceAreaPages((prev) =>
           JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
         );

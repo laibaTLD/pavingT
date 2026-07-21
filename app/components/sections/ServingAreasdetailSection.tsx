@@ -43,7 +43,6 @@ export const ServingAreasdetailSection: React.FC<ServingAreasdetailSectionProps>
   className,
 }) => {
   const themeColors = useThemeColors();
-  const whyChooseUs = data.whyChooseUs ?? data.about;
   const servingAreasConfig = stripStaticAreasFromConfig(data.servingAreas);
   const servingAreasEnabled =
     servingAreasConfig &&
@@ -69,7 +68,7 @@ export const ServingAreasdetailSection: React.FC<ServingAreasdetailSectionProps>
         <ServiceOverview overview={data.serviceOverview} />
       ) : null}
       {data.serviceDetails ? <ServiceDetails details={data.serviceDetails} /> : null}
-      {whyChooseUs ? <WhyChooseUs whyChooseUs={whyChooseUs} /> : null}
+      {data.whyChooseUs ? <WhyChooseUs whyChooseUs={data.whyChooseUs} /> : null}
       {data.faqs ? <FAQs faqs={data.faqs} /> : null}
       {servingAreasEnabled ? <ServingAreas service={servingAreasConfig} /> : null}
     </div>

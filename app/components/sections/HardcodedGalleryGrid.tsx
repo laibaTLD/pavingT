@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { GALLERY_IMAGES } from '@/app/lib/galleryImages';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
@@ -63,7 +63,7 @@ export function HardcodedGalleryGrid() {
 
         <div ref={triggerRef} className={SECTION.container}>
           <div className={SECTION.header}>
-            <div className="min-w-0 lg:col-span-8">
+            <div className="min-w-0 lg:col-span-12">
               <p
                 className={SECTION.label}
                 style={{
@@ -95,10 +95,7 @@ export function HardcodedGalleryGrid() {
               >
                 A look at finished paving, driveways, and outdoor surfaces from recent projects.
               </p>
-            </div>
-            <div className="hidden lg:col-span-4 lg:flex lg:justify-end lg:pt-2">
-              <SectionRail index="01" loaded={loaded} primaryColor={primaryColor} />
-            </div>
+            </div>
           </div>
 
           <div className={`${SECTION.content} grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5`}>

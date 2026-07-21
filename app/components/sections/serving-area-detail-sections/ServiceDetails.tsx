@@ -5,7 +5,7 @@ import { tiptapToText } from '@/app/lib/seo';
 import { cn } from '@/app/lib/utils';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
 interface ServiceDetailsProps {
@@ -65,7 +65,7 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, classNa
       <SectionTopAccent primaryColor={primaryColor} />
       <div ref={triggerRef} className={SECTION.container}>
         <div className={SECTION.header}>
-          <div className="min-w-0 lg:col-span-8">
+          <div className="min-w-0 lg:col-span-12">
             <p
               className={SECTION.label}
               style={{
@@ -99,10 +99,7 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, classNa
                 {resolvedDescription}
               </p>
             )}
-          </div>
-          <div className="hidden lg:col-span-4 lg:flex lg:justify-end lg:pt-2">
-            <SectionRail index="07" loaded={loaded} primaryColor={primaryColor} />
-          </div>
+          </div>
         </div>
       </div>
     </section>

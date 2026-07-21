@@ -6,7 +6,7 @@ import { tiptapToText } from '@/app/lib/seo';
 import { cn, getImageSrc } from '@/app/lib/utils';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
@@ -143,11 +143,7 @@ export const ServiceOverview: React.FC<ServiceOverviewProps> = ({ overview, clas
                 sizes={IMAGE_SIZES.sectionHalf}
               />
             </div>
-          ) : (
-            <div className="hidden lg:col-span-4 lg:flex lg:justify-end lg:pt-2">
-              <SectionRail index="06" loaded={loaded} primaryColor={primaryColor} />
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </section>

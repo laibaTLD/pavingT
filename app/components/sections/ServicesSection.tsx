@@ -10,7 +10,7 @@ import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { resolveServiceSlug } from '@/app/lib/serviceAreaSlugs';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { EASE, splitTitleLines } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import {
   getHighResImageUrl,
   SERVICE_IMAGE_QUALITY,
@@ -244,10 +244,7 @@ export function ServicesSection({
               ))}
             </h2>
           </div>
-
-          <div className="hidden lg:col-span-2 lg:col-start-11 lg:row-start-1 lg:flex lg:justify-end lg:pt-1">
-            <SectionRail index="03" loaded={loaded} primaryColor={primaryColor} />
-          </div>
+
         </div>
 
         <div

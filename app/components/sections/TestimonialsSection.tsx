@@ -7,7 +7,7 @@ import { tiptapToText } from '@/app/lib/seo';
 import { cn } from '@/app/lib/utils';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
@@ -93,7 +93,7 @@ export function TestimonialsSection({
       <SectionTopAccent primaryColor={primaryColor} />
       <div ref={triggerRef} className={SECTION.container}>
         <div className={SECTION.header}>
-          <div className="lg:col-span-8 min-w-0">
+          <div className="min-w-0 lg:col-span-12">
             <p
               className={SECTION.label}
               style={{
@@ -116,10 +116,7 @@ export function TestimonialsSection({
               baseDelay={0.2}
               lightSweep
             />
-          </div>
-          <div className="hidden lg:flex lg:col-span-4 lg:justify-end lg:pt-2">
-            <SectionRail index="11" loaded={loaded} primaryColor={primaryColor} />
-          </div>
+          </div>
         </div>
 
         <div

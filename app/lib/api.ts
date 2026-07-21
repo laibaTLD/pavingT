@@ -55,9 +55,9 @@ export const serviceApi = {
 
 // Blog API
 export const blogApi = {
-  getPostsBySite: async (siteSlug: string, limit?: number): Promise<BlogPost[]> => {
+  getPostsBySite: async (siteSlug: string, limit?: number, options?: ApiGetOptions): Promise<BlogPost[]> => {
     const url = limit ? `/public/sites/${siteSlug}/blog?limit=${limit}` : `/public/sites/${siteSlug}/blog`;
-    const response = await api.get(url);
+    const response = await api.get(url, options);
     return response.data?.data ?? response.data;
   },
   
@@ -83,8 +83,11 @@ export const projectApi = {
 
 // Testimonials API
 export const testimonialApi = {
-  getTestimonialsBySite: async (siteSlug: string): Promise<{ title?: string; description?: string; testimonials: any[] }> => {
-    const response = await api.get(`/testimonials?siteSlug=${siteSlug}`);
+  getTestimonialsBySite: async (
+    siteSlug: string,
+    options?: ApiGetOptions,
+  ): Promise<{ title?: string; description?: string; testimonials: any[] }> => {
+    const response = await api.get(`/testimonials?siteSlug=${siteSlug}`, options);
     const data = response.data?.data ?? response.data ?? { testimonials: [] };
     return data;
   },
@@ -93,15 +96,9 @@ export const testimonialApi = {
 // Service Area Pages API
 export const serviceAreaApi = {
   getServiceAreaPagesBySite: async (siteSlug: string, options?: ApiGetOptions): Promise<any[]> => {
-    try {
-      const response = await api.get(`/public/sites/${siteSlug}/service-area-pages`, options);
-      return response.data?.data ?? response.data ?? [];
-    } catch (err) {
-      if (!options?.silent) {
-        console.warn('Service area pages endpoint not available');
-      }
-      return [];
-    }
+    const response = await api.get(`/public/sites/${siteSlug}/service-area-pages`, options);
+    const raw = response.data?.data ?? response.data ?? [];
+    return Array.isArray(raw) ? raw : [];
   },
 };
 

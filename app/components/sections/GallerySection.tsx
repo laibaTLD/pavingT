@@ -10,7 +10,7 @@ import { cn, getImageSrc } from '@/app/lib/utils';
 import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { GALLERY_IMAGES } from '@/app/lib/galleryImages';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
@@ -99,7 +99,7 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
       <SectionTopAccent primaryColor={primaryColor} />
       <div ref={triggerRef} className={SECTION.container}>
         <div className={SECTION.header}>
-          <div className="lg:col-span-8 min-w-0">
+          <div className="min-w-0 lg:col-span-12">
             <p
               className={SECTION.label}
               style={{
@@ -136,10 +136,7 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
                 {resolvedDescription}
               </p>
             )}
-          </div>
-          <div className="hidden lg:flex lg:col-span-4 lg:justify-end lg:pt-2">
-            <SectionRail index="08" loaded={loaded} primaryColor={primaryColor} />
-          </div>
+          </div>
         </div>
 
         <div className={SECTION.content}>

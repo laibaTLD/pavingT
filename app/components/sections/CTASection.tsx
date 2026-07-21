@@ -10,7 +10,7 @@ import { cn, getImageSrc } from '@/app/lib/utils';
 import { OptimizedImage, IMAGE_QUALITY_HIGH, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionRail, SectionTopAccent } from '@/components/EditorialSection';
+import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { themeSurface } from '@/lib/theme';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
@@ -174,10 +174,7 @@ export function CTASection({ ctaSection, className }: CTASectionProps) {
               />
             </div>
           ) : null}
-
-          <div className="hidden lg:col-start-12 lg:row-start-1 lg:flex lg:justify-end lg:pt-1">
-            <SectionRail index="05" loaded={loaded} primaryColor={primaryColor} />
-          </div>
+
         </div>
       </div>
     </section>
