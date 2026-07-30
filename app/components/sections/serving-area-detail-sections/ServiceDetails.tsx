@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { tiptapToText } from '@/app/lib/seo';
 import { cn } from '@/app/lib/utils';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 import { AnimatedHeading, EASE } from '@/components/AnimatedTitle';
-import { EditorialBackdrop, SECTION, SectionTopAccent } from '@/components/EditorialSection';
 import { useEditorialTheme } from '@/hooks/useEditorialTheme';
 
 interface ServiceDetailsProps {
@@ -36,6 +36,12 @@ function normalizeDetailsSection(details: unknown): DetailsData | null {
   return { title, description };
 }
 
+function hasRichContent(content: unknown): boolean {
+  if (content == null || content === '') return false;
+  if (typeof content === 'object') return Boolean(tiptapToText(content));
+  return Boolean(String(content).trim());
+}
+
 export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, className }) => {
   const theme = useEditorialTheme();
   const primaryColor = theme.primary;
@@ -47,7 +53,7 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, classNa
     [section?.title]
   );
 
-  const resolvedDescription = useMemo(
+  const descriptionText = useMemo(
     () => tiptapToText(section?.description),
     [section?.description]
   );
@@ -59,48 +65,72 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, classNa
 
   if (!section) return null;
 
+  const showDescription =
+    hasRichContent(section.description) || Boolean(descriptionText);
+
   return (
-    <section id="service-details" className={cn(SECTION.wrap, className)}>
-      <EditorialBackdrop primaryColor={primaryColor} />
-      <SectionTopAccent primaryColor={primaryColor} />
-      <div ref={triggerRef} className={SECTION.container}>
-        <div className={SECTION.header}>
-          <div className="min-w-0 lg:col-span-12">
-            <p
-              className={SECTION.label}
-              style={{
-                fontFamily: 'var(--wb-body-font, sans-serif)',
-                color: primaryColor,
-                opacity: loaded ? 1 : 0,
-                transform: loaded ? 'translateY(0)' : 'translateY(20px)',
-                transition: `opacity 0.6s ${EASE}, transform 0.6s ${EASE}`,
-              }}
-            >
-              <span className={SECTION.labelBar} style={{ backgroundColor: primaryColor }} />
-              Service Details
-            </p>
-            <AnimatedHeading
-              title={resolvedHeading}
-              loaded={loaded}
-              baseDelay={0.2}
-              lightSweep
-            />
-            {resolvedDescription && (
-              <p
-                className={`mt-8 max-w-2xl ${SECTION.body}`}
-                style={{
-                  fontFamily: 'var(--wb-body-font, sans-serif)',
-                  opacity: loaded ? 1 : 0,
-                  transform: loaded ? 'translateY(0)' : 'translateY(24px)',
-                  transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
-                  transitionDelay: '0.8s',
-                }}
-              >
-                {resolvedDescription}
-              </p>
-            )}
-          </div>
-        </div>
+    <section
+      id="service-details"
+      className={cn('relative h-full overflow-hidden', className)}
+      style={{ backgroundColor: 'var(--wb-page-bg)' }}
+    >
+      <div
+        ref={triggerRef}
+        className="flex h-full flex-col px-6 py-12 text-center sm:px-8 sm:py-14 lg:px-10 lg:py-16"
+      >
+        <p
+          className="mb-5 flex items-center justify-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em]"
+          style={{
+            fontFamily: 'var(--wb-body-font, sans-serif)',
+            color: primaryColor,
+            opacity: loaded ? 1 : 0,
+            transform: loaded ? 'translateY(0)' : 'translateY(16px)',
+            transition: `opacity 0.6s ${EASE}, transform 0.6s ${EASE}`,
+          }}
+        >
+          <span className="inline-block h-px w-8 shrink-0" style={{ backgroundColor: primaryColor }} />
+          Service Details
+        </p>
+
+        <AnimatedHeading
+          title={resolvedHeading}
+          loaded={loaded}
+          baseDelay={0.15}
+          lightSweep
+          className="text-center !text-[clamp(1.2rem,1.8vw,1.65rem)]"
+        />
+
+        {showDescription && hasRichContent(section.description) && (
+          <div
+            className="mx-auto mt-6 max-w-lg text-sm leading-relaxed sm:mt-7 sm:text-[0.9375rem] [&_h1]:mt-3 [&_h1]:text-base [&_h1]:font-bold [&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-bold [&_h3]:mt-2 [&_h3]:text-sm [&_h3]:font-bold [&_strong]:font-semibold"
+            style={{
+              fontFamily: 'var(--wb-body-font, sans-serif)',
+              color: 'var(--wb-text-secondary)',
+              opacity: loaded ? 1 : 0,
+              transform: loaded ? 'translateY(0)' : 'translateY(18px)',
+              transition: `opacity 0.75s ${EASE}, transform 0.75s ${EASE}`,
+              transitionDelay: '0.55s',
+            }}
+          >
+            <TiptapRenderer content={section.description} className="text-inherit" />
+          </div>
+        )}
+
+        {showDescription && !hasRichContent(section.description) && descriptionText && (
+          <p
+            className="mx-auto mt-6 max-w-lg text-sm leading-relaxed sm:mt-7 sm:text-[0.9375rem]"
+            style={{
+              fontFamily: 'var(--wb-body-font, sans-serif)',
+              color: 'var(--wb-text-secondary)',
+              opacity: loaded ? 1 : 0,
+              transform: loaded ? 'translateY(0)' : 'translateY(18px)',
+              transition: `opacity 0.75s ${EASE}, transform 0.75s ${EASE}`,
+              transitionDelay: '0.55s',
+            }}
+          >
+            {descriptionText}
+          </p>
+        )}
       </div>
     </section>
   );

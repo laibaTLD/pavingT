@@ -9,10 +9,20 @@ import { AmbientFoundation } from '@/app/components/cinematic/AmbientFoundation'
 import { HeroIntroProvider } from '@/app/providers/HeroIntroProvider'
 import { Header } from '@/app/components/layout/Header'
 import { fetchInitialSiteData } from '@/app/lib/serverSiteData'
+import {
+  generateMetadata as buildMetadata,
+  getSiteSeoData,
+} from '@/app/lib/metadata'
 
-export const metadata: Metadata = {
-  title: 'Web Builder Site',
-  description: 'Generated site using Web Builder',
+export async function generateMetadata(): Promise<Metadata> {
+  const initialData = await fetchInitialSiteData()
+  if (!initialData?.site) {
+    return {
+      title: 'Web Builder Site',
+      description: 'Generated site using Web Builder',
+    }
+  }
+  return buildMetadata(getSiteSeoData(initialData.site), initialData.site)
 }
 
 export default async function RootLayout({

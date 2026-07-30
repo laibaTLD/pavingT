@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
+import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { tiptapToText } from '@/app/lib/seo';
 import { cn, getImageSrc } from '@/app/lib/utils';
 import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
@@ -30,6 +31,12 @@ function normalizeImage(raw: unknown): { url: string; altText?: string } | undef
     if (record.url?.trim()) return { url: record.url.trim(), altText: record.altText };
   }
   return undefined;
+}
+
+function hasRichContent(content: unknown): boolean {
+  if (content == null || content === '') return false;
+  if (typeof content === 'object') return Boolean(tiptapToText(content));
+  return Boolean(String(content).trim());
 }
 
 /** Overview title / description / image only — no feature-point cards. */
@@ -65,7 +72,7 @@ export const ServiceOverview: React.FC<ServiceOverviewProps> = ({ overview, clas
     [section?.title]
   );
 
-  const resolvedDescription = useMemo(
+  const descriptionText = useMemo(
     () => tiptapToText(section?.description),
     [section?.description]
   );
@@ -77,20 +84,30 @@ export const ServiceOverview: React.FC<ServiceOverviewProps> = ({ overview, clas
 
   if (!section) return null;
 
+  const showDescription =
+    hasRichContent(section.description) || Boolean(descriptionText);
+  const hasImage = Boolean(section.imageUrl);
+
   return (
-    <section id="service-overview" className={cn(SECTION.wrap, className)}>
+    <section id="service-overview" className={cn(SECTION.wrap, 'overflow-visible', className)}>
       <EditorialBackdrop primaryColor={primaryColor} />
       <SectionTopAccent primaryColor={primaryColor} />
       <div ref={triggerRef} className={SECTION.container}>
         <div
           className={cn(
-            'grid grid-cols-1 items-center gap-8 lg:gap-12',
-            section.imageUrl ? 'lg:grid-cols-12' : ''
+            'grid grid-cols-1 gap-10 lg:gap-14 xl:gap-16',
+            hasImage && 'lg:grid-cols-12'
           )}
         >
-          <div className={cn('min-w-0', section.imageUrl ? 'lg:col-span-6' : 'lg:col-span-8')}>
+          {/* Copy — left */}
+          <div
+            className={cn(
+              'min-w-0',
+              hasImage ? 'lg:col-span-6 xl:col-span-5' : 'mx-auto max-w-3xl text-center'
+            )}
+          >
             <p
-              className={SECTION.label}
+              className={cn(SECTION.label, !hasImage && 'justify-center')}
               style={{
                 fontFamily: 'var(--wb-body-font, sans-serif)',
                 color: primaryColor,
@@ -102,48 +119,104 @@ export const ServiceOverview: React.FC<ServiceOverviewProps> = ({ overview, clas
               <span className={SECTION.labelBar} style={{ backgroundColor: primaryColor }} />
               Service Overview
             </p>
+
             <AnimatedHeading
               title={resolvedHeading}
               loaded={loaded}
               baseDelay={0.2}
               lightSweep
+              className={cn(
+                '!text-[clamp(1.35rem,2.2vw,1.875rem)]',
+                hasImage ? 'text-left' : 'text-center'
+              )}
             />
-            {resolvedDescription && (
-              <p
-                className={`mt-8 max-w-xl ${SECTION.body}`}
+
+            {showDescription && hasRichContent(section.description) && (
+              <div
+                className={cn(
+                  `mt-6 sm:mt-8 ${SECTION.body}`,
+                  '[&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:text-base [&_h3]:font-bold [&_h4]:mt-3 [&_h4]:text-base [&_h4]:font-semibold [&_strong]:font-semibold [&_b]:font-semibold',
+                  hasImage ? 'max-w-xl text-left' : 'mx-auto max-w-xl text-center'
+                )}
                 style={{
                   fontFamily: 'var(--wb-body-font, sans-serif)',
+                  color: 'var(--wb-text-secondary)',
                   opacity: loaded ? 1 : 0,
                   transform: loaded ? 'translateY(0)' : 'translateY(24px)',
                   transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
-                  transitionDelay: '0.8s',
+                  transitionDelay: '0.55s',
                 }}
               >
-                {resolvedDescription}
+                <TiptapRenderer content={section.description} className="text-inherit" />
+              </div>
+            )}
+
+            {showDescription && !hasRichContent(section.description) && descriptionText && (
+              <p
+                className={cn(
+                  `mt-6 sm:mt-8 ${SECTION.body}`,
+                  hasImage ? 'max-w-xl text-left' : 'mx-auto max-w-xl text-center'
+                )}
+                style={{
+                  fontFamily: 'var(--wb-body-font, sans-serif)',
+                  color: 'var(--wb-text-secondary)',
+                  opacity: loaded ? 1 : 0,
+                  transform: loaded ? 'translateY(0)' : 'translateY(24px)',
+                  transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
+                  transitionDelay: '0.55s',
+                }}
+              >
+                {descriptionText}
               </p>
+            )}
+
+            {/* Mobile / no-desktop image */}
+            {hasImage && (
+              <div
+                className="relative mt-8 aspect-[4/3] w-full overflow-hidden border lg:hidden"
+                style={{
+                  borderColor: borderTint,
+                  opacity: loaded ? 1 : 0,
+                  transform: loaded ? 'translateY(0)' : 'translateY(24px)',
+                  transition: `opacity 0.85s ${EASE}, transform 0.85s ${EASE}`,
+                  transitionDelay: '0.4s',
+                }}
+              >
+                <OptimizedImage
+                  src={section.imageUrl!}
+                  alt={section.imageAlt || resolvedHeading}
+                  fill
+                  className="object-cover object-center"
+                  sizes={IMAGE_SIZES.sectionWide}
+                />
+              </div>
             )}
           </div>
 
-          {section.imageUrl ? (
-            <div
-              className="relative aspect-[4/3] w-full overflow-hidden border sm:aspect-[16/11] lg:col-span-6 lg:aspect-auto lg:min-h-[360px]"
-              style={{
-                borderColor: borderTint,
-                opacity: loaded ? 1 : 0,
-                transform: loaded ? 'translateY(0)' : 'translateY(24px)',
-                transition: `opacity 0.85s ${EASE}, transform 0.85s ${EASE}`,
-                transitionDelay: '0.45s',
-              }}
-            >
-              <OptimizedImage
-                src={section.imageUrl}
-                alt={section.imageAlt || resolvedHeading}
-                fill
-                className="object-cover object-center"
-                sizes={IMAGE_SIZES.sectionHalf}
-              />
-            </div>
-          ) : null}
+          {/* Sticky image — right (column stretches with copy; sticky needs overflow visible ancestors) */}
+          {hasImage && (
+            <aside className="relative hidden lg:col-span-6 lg:block xl:col-span-7">
+              <div className="sticky top-28 z-10">
+                <div
+                  className="relative aspect-[4/5] w-full overflow-hidden border xl:aspect-[5/6] xl:min-h-[28rem]"
+                  style={{
+                    borderColor: borderTint,
+                    opacity: loaded ? 1 : 0,
+                    transition: `opacity 0.85s ${EASE}`,
+                    transitionDelay: '0.35s',
+                  }}
+                >
+                  <OptimizedImage
+                    src={section.imageUrl!}
+                    alt={section.imageAlt || resolvedHeading}
+                    fill
+                    className="object-cover object-center"
+                    sizes={IMAGE_SIZES.sectionHalf}
+                  />
+                </div>
+              </div>
+            </aside>
+          )}
         </div>
       </div>
     </section>

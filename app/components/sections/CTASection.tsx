@@ -88,8 +88,18 @@ export function CTASection({ ctaSection, className }: CTASectionProps) {
       <EditorialBackdrop primaryColor={primaryColor} />
       <SectionTopAccent primaryColor={primaryColor} />
       <div ref={triggerRef} className={SECTION.container}>
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
-          <div className="min-w-0 lg:col-span-5 lg:row-start-1">
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-6 lg:gap-8',
+            ctaImage ? 'lg:grid-cols-2 lg:items-stretch' : ''
+          )}
+        >
+          <div
+            className={cn(
+              'min-w-0',
+              ctaImage && 'flex flex-col justify-center lg:pr-4'
+            )}
+          >
             <p
               className={SECTION.label}
               style={{
@@ -126,7 +136,7 @@ export function CTASection({ ctaSection, className }: CTASectionProps) {
             </p>
             <Link
               href={ctaHref}
-              className="mt-5 inline-block rounded-full border px-8 py-3 text-xs font-medium uppercase tracking-[0.15em] transition-all duration-300 hover:text-[var(--wb-text-on-dark)]"
+              className="mt-5 inline-block w-fit rounded-full border px-8 py-3 text-xs font-medium uppercase tracking-[0.15em] transition-all duration-300 hover:text-[var(--wb-text-on-dark)]"
               style={{
                 fontFamily: 'var(--wb-body-font, sans-serif)',
                 borderColor: primaryColor,
@@ -151,7 +161,7 @@ export function CTASection({ ctaSection, className }: CTASectionProps) {
 
           {ctaImage ? (
             <div
-              className="relative aspect-[4/3] overflow-hidden shadow-[0_24px_60px_color-mix(in_srgb,var(--wb-text-main)_10%,transparent)] lg:col-span-5 lg:col-start-7 lg:row-start-1"
+              className="relative min-h-[240px] overflow-hidden shadow-[0_24px_60px_color-mix(in_srgb,var(--wb-text-main)_10%,transparent)] sm:min-h-[280px] lg:min-h-full lg:self-stretch"
               style={{
                 border: `1px solid ${themeSurface(primaryColor, 0.2)}`,
                 opacity: loaded ? 1 : 0,
@@ -174,7 +184,6 @@ export function CTASection({ ctaSection, className }: CTASectionProps) {
               />
             </div>
           ) : null}
-
         </div>
       </div>
     </section>

@@ -67,8 +67,31 @@ export const ServingAreasdetailSection: React.FC<ServingAreasdetailSectionProps>
       (data.serviceOverview as { enabled?: boolean }).enabled !== false ? (
         <ServiceOverview overview={data.serviceOverview} />
       ) : null}
-      {data.serviceDetails ? <ServiceDetails details={data.serviceDetails} /> : null}
-      {data.whyChooseUs ? <WhyChooseUs whyChooseUs={data.whyChooseUs} /> : null}
+      {data.serviceDetails || data.whyChooseUs ? (
+        <div
+          className="grid grid-cols-1 border-t lg:grid-cols-2"
+          style={{
+            backgroundColor: themeColors.pageBackground,
+            borderColor: `color-mix(in srgb, ${themeColors.mainText} 12%, transparent)`,
+          }}
+        >
+          {data.serviceDetails ? (
+            <div
+              className="border-b lg:border-b-0 lg:border-r"
+              style={{
+                borderColor: `color-mix(in srgb, ${themeColors.mainText} 12%, transparent)`,
+              }}
+            >
+              <ServiceDetails details={data.serviceDetails} />
+            </div>
+          ) : null}
+          {data.whyChooseUs ? (
+            <div>
+              <WhyChooseUs whyChooseUs={data.whyChooseUs} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {data.faqs ? <FAQs faqs={data.faqs} /> : null}
       {servingAreasEnabled ? <ServingAreas service={servingAreasConfig} /> : null}
     </div>

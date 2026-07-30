@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
+import { getImageSrc } from './utils'
 
 interface SEOData {
   title?: string
@@ -7,6 +8,28 @@ interface SEOData {
   keywords?: string[]
   ogImageUrl?: string
   noIndex?: boolean
+}
+
+/** Resolve CMS favicon (falls back to logo so tabs never look empty). */
+export function resolveSiteFavicon(site?: Site | null): string | undefined {
+  if (!site) return undefined
+  const fromSeo = getImageSrc(site.seo?.faviconUrl)
+  if (fromSeo) return fromSeo
+  const fromLogo = getImageSrc(site.theme?.logoUrl)
+  return fromLogo || undefined
+}
+
+function withSiteIcons(metadata: Metadata, site?: Site | null): Metadata {
+  const favicon = resolveSiteFavicon(site)
+  if (!favicon) return metadata
+  return {
+    ...metadata,
+    icons: {
+      icon: [{ url: favicon }],
+      shortcut: favicon,
+      apple: [{ url: favicon }],
+    },
+  }
 }
 
 export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
@@ -50,7 +73,7 @@ export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
     }
   }
 
-  return metadata
+  return withSiteIcons(metadata, site)
 }
 
 export function getPageSeoData(page: Page | ServiceAreaPage): SEOData {
