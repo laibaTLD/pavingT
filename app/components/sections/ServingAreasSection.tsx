@@ -151,6 +151,105 @@ export function buildServiceAreas(
   return result;
 }
 
+export type NavServiceMenuItem = {
+  label: string;
+  slug: string;
+  href: string;
+  areas: { label: string; href: string }[];
+};
+
+/**
+ * Header / nav tree: every visible service + ALL of its serving areas.
+ * Dedupes per-service (same city can appear under multiple services).
+ * Sources: service.serviceAreas + published service-area CMS pages.
+ */
+export function buildNavServiceMenu(
+  services: Service[],
+  serviceAreaPages: ServiceAreaPage[] | undefined,
+  siteServiceAreas?: string[]
+): NavServiceMenuItem[] {
+  const safeServices = (Array.isArray(services) ? services : []).filter(isVisibleService);
+  const safePages = Array.isArray(serviceAreaPages) ? serviceAreaPages : [];
+
+  const resolveSlugForPage = (page: ServiceAreaPage): string => {
+    const fromHelper = getServiceSlugFromAreaPage(page);
+    if (fromHelper) return fromHelper;
+    const serviceRef = page.serviceId as string | { slug?: string; name?: string } | undefined;
+    if (serviceRef && typeof serviceRef === 'object') {
+      if (serviceRef.slug) return resolveServiceSlug({ slug: serviceRef.slug });
+      if (serviceRef.name) return resolveServiceSlug({ name: serviceRef.name });
+    }
+    if (typeof serviceRef === 'string') {
+      const svc = safeServices.find((s) => s._id === serviceRef);
+      if (svc) return resolveServiceSlug(svc);
+    }
+    return '';
+  };
+
+  const pagesByService = new Map<string, ServiceAreaPage[]>();
+  for (const page of safePages) {
+    if (page.status === 'draft' || page.status === 'archived') continue;
+    const slug = resolveSlugForPage(page);
+    if (!slug) continue;
+    const list = pagesByService.get(slug) ?? [];
+    list.push(page);
+    pagesByService.set(slug, list);
+  }
+
+  const defaultSlug = safeServices[0] ? resolveServiceSlug(safeServices[0]) : '';
+
+  return safeServices.map((service) => {
+    const slug = resolveServiceSlug(service);
+    const seenKeys = new Set<string>();
+    const seenHrefs = new Set<string>();
+    const areas: { label: string; href: string }[] = [];
+
+    const pushArea = (area: unknown) => {
+      const normalized = normalizeServiceArea(area);
+      if (!normalized) return;
+      if (EXCLUDED_AREA_CITIES.has(normalized.city.toLowerCase())) return;
+
+      const key = areaKey(normalized);
+      if (seenKeys.has(key)) return;
+
+      const enriched = enrichArea(normalized, slug, safePages);
+      const href = enriched.href || getServiceAreaPageHref(slug, enriched, safePages);
+      const label = enriched.region ? `${enriched.city}, ${enriched.region}` : enriched.city;
+      const hrefKey = href.trim().toLowerCase();
+      const labelKey = label.trim().toLowerCase();
+
+      // Same city can arrive as "Bellevue"+"WA" and "Bellevue, WA"+"" — collapse by href/label too
+      if (seenHrefs.has(hrefKey) || seenKeys.has(`label:${labelKey}`)) return;
+
+      seenKeys.add(key);
+      seenKeys.add(`label:${labelKey}`);
+      seenHrefs.add(hrefKey);
+      areas.push({ label, href });
+    };
+
+    (service.serviceAreas ?? []).forEach(pushArea);
+
+    (pagesByService.get(slug) ?? []).forEach((page) => {
+      if (!page.city?.trim()) return;
+      pushArea({ city: page.city, region: page.region, slug: page.slug });
+    });
+
+    // Site-level areas attach to the first service only as fallback coverage
+    if (slug === defaultSlug) {
+      (siteServiceAreas ?? []).forEach(pushArea);
+    }
+
+    areas.sort((a, b) => a.label.localeCompare(b.label));
+
+    return {
+      label: service.name,
+      slug,
+      href: `/service/${slug}`,
+      areas,
+    };
+  });
+}
+
 export function ServingAreasSection({
   servingAreasSection,
   className,
