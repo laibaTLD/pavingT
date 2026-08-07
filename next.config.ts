@@ -46,6 +46,11 @@ const nextConfig: NextConfig = {
     const apiOrigin = remoteApi ?? 'http://localhost:5000/api';
 
     return [
+      // Browsers request /favicon.ico by default; proxy CMS icon.
+      {
+        source: '/favicon.ico',
+        destination: '/site-icon',
+      },
       {
         source: '/api/:path*',
         destination: `${apiOrigin}/:path*`,

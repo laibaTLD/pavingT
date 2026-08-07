@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
+import { getSiteOrigin } from './seo'
 import { getImageSrc } from './utils'
 
 interface SEOData {
@@ -10,6 +11,9 @@ interface SEOData {
   noIndex?: boolean
 }
 
+/** Same-origin proxy — avoids default app/favicon.ico winning over CMS webp. */
+export const SITE_ICON_PATH = '/site-icon'
+
 /** Resolve CMS favicon (falls back to logo so tabs never look empty). */
 export function resolveSiteFavicon(site?: Site | null): string | undefined {
   if (!site) return undefined
@@ -19,15 +23,31 @@ export function resolveSiteFavicon(site?: Site | null): string | undefined {
   return fromLogo || undefined
 }
 
+function iconMimeFromUrl(url: string): string {
+  const path = url.split('?')[0]?.toLowerCase() ?? ''
+  if (path.endsWith('.svg')) return 'image/svg+xml'
+  if (path.endsWith('.webp')) return 'image/webp'
+  if (path.endsWith('.png')) return 'image/png'
+  if (path.endsWith('.ico')) return 'image/x-icon'
+  if (path.endsWith('.jpg') || path.endsWith('.jpeg')) return 'image/jpeg'
+  if (path.endsWith('.gif')) return 'image/gif'
+  return 'image/png'
+}
+
 function withSiteIcons(metadata: Metadata, site?: Site | null): Metadata {
   const favicon = resolveSiteFavicon(site)
   if (!favicon) return metadata
+
+  const origin = getSiteOrigin()
+  const type = iconMimeFromUrl(favicon)
+
   return {
     ...metadata,
+    ...(origin ? { metadataBase: new URL(origin) } : {}),
     icons: {
-      icon: [{ url: favicon }],
-      shortcut: favicon,
-      apple: [{ url: favicon }],
+      icon: [{ url: SITE_ICON_PATH, type }],
+      shortcut: [{ url: SITE_ICON_PATH, type }],
+      apple: [{ url: SITE_ICON_PATH, type }],
     },
   }
 }
