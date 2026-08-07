@@ -7,6 +7,22 @@ export type OptimizedImageProps = Omit<ImageProps, 'src'> & {
   src: string;
 };
 
+/** CMS uploads are already compressed WebP/AVIF — skip Vercel transforms (avoids 402 quota). */
+function isCmsUploadUrl(src: string): boolean {
+  try {
+    const pathname = src.startsWith('http')
+      ? new URL(src).pathname
+      : src.split('?')[0] || '';
+    return (
+      pathname.includes('/api/uploads/') ||
+      pathname.includes('/uploads/') ||
+      /\.(webp|avif)(\?|#|$)/i.test(src)
+    );
+  } catch {
+    return /\.(webp|avif)(\?|#|$)/i.test(src);
+  }
+}
+
 function useNativeImgElement(src: string, unoptimized?: boolean): boolean {
   if (!src || unoptimized) return true;
   if (src.startsWith('data:') || src.startsWith('blob:')) return true;
@@ -16,6 +32,7 @@ function useNativeImgElement(src: string, unoptimized?: boolean): boolean {
 
 /**
  * Wrapper around next/image: WebP/AVIF, default quality 90, sensible size hints for CMS URLs.
+ * Remote CMS uploads skip Vercel Image Optimization to avoid production 402 quota errors.
  */
 export const OptimizedImage = forwardRef<HTMLImageElement | null, OptimizedImageProps>(
   function OptimizedImage(
@@ -36,15 +53,28 @@ export const OptimizedImage = forwardRef<HTMLImageElement | null, OptimizedImage
   ) {
     if (!src) return null;
 
-    if (useNativeImgElement(src, unoptimized)) {
+    const skipOptimizer = Boolean(unoptimized) || isCmsUploadUrl(src);
+
+    if (useNativeImgElement(src, skipOptimizer)) {
       return (
         <img
           ref={ref}
           src={src}
           alt={alt}
           className={className}
-          style={style}
-          {...rest}
+          style={
+            fill
+              ? {
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  ...style,
+                }
+              : style
+          }
+          loading={rest.priority ? undefined : 'lazy'}
+          decoding="async"
         />
       );
     }
