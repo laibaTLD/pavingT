@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
 import type { Page } from '@/app/lib/types';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { getPageHref } from '@/app/lib/siteContent';
@@ -27,6 +28,9 @@ type GalleryImage = {
 };
 
 type GallerySectionImages = NonNullable<Page['gallerySection']>['images'];
+
+/** Embla disables loop unless slide content is wider than the viewport — pad copies. */
+const MIN_LOOP_SLIDES = 8;
 
 function mapGalleryImages(images: GallerySectionImages | undefined): GalleryImage[] {
   if (!images?.length) return [];
@@ -56,6 +60,23 @@ function mapHardcodedImages(): GalleryImage[] {
   }));
 }
 
+function buildLoopSlides(images: GalleryImage[]): GalleryImage[] {
+  if (images.length === 0) return [];
+  if (images.length >= MIN_LOOP_SLIDES) return images;
+
+  const copies = Math.ceil(MIN_LOOP_SLIDES / images.length);
+  const slides: GalleryImage[] = [];
+  for (let copy = 0; copy < copies; copy++) {
+    for (const img of images) {
+      slides.push({
+        ...img,
+        id: `${img.id}-loop-${copy}`,
+      });
+    }
+  }
+  return slides;
+}
+
 export function GallerySection({ gallerySection, className }: GallerySectionProps) {
   const { pages } = useWebBuilder();
 
@@ -77,6 +98,8 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
     return fromBuilder.length > 0 ? fromBuilder : mapHardcodedImages();
   }, [gallerySection?.images]);
 
+  const loopSlides = useMemo(() => buildLoopSlides(galleryImages), [galleryImages]);
+
   const galleryHref = useMemo(() => {
     const galleryPage = pages.find(
       (p) => (p.slug || '').replace(/^\/+|\/+$/g, '').toLowerCase() === 'gallery'
@@ -84,14 +107,53 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
     return galleryPage ? getPageHref(galleryPage) : '/gallery';
   }, [pages]);
 
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: 'start',
+    containScroll: false,
+    slidesToScroll: 1,
+  });
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi || galleryImages.length === 0) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap() % galleryImages.length);
+  }, [emblaApi, galleryImages.length]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  // Re-init when slide set changes so loop math recalculates
+  useEffect(() => {
+    emblaApi?.reInit();
+  }, [emblaApi, loopSlides.length]);
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback(
+    (index: number) => emblaApi?.scrollTo(index),
+    [emblaApi]
+  );
+
   const { ref: triggerRef, isVisible } = useScrollAnimation<HTMLDivElement>({
     threshold: 0.12,
   });
   const loaded = isVisible;
 
-  // Hide only when explicitly disabled; otherwise show builder or hardcoded images
   if (gallerySection?.enabled === false) return null;
   if (!galleryImages.length) return null;
+
+  const borderColor = themeSurface(primaryColor, 0.2);
+  const showControls = galleryImages.length > 1;
 
   return (
     <section id="gallery" className={cn(SECTION.wrap, className)}>
@@ -136,36 +198,85 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
                 {resolvedDescription}
               </p>
             )}
-          </div>
+          </div>
         </div>
 
-        <div className={SECTION.content}>
-          <div className="-mx-6 overflow-x-auto overscroll-x-contain px-6 pb-4 [scrollbar-width:thin] md:-mx-12 md:px-12 lg:-mx-16 lg:px-16 xl:-mx-20 xl:px-20">
-            <div className="flex w-max gap-4 md:gap-6">
-              {galleryImages.slice(0, 6).map((img, index) => (
-                <article
-                  key={img.id}
-                  className="relative w-[min(78vw,280px)] shrink-0 overflow-hidden bg-[var(--wb-card-bg-light)] shadow-[0_16px_40px_color-mix(in_srgb,var(--wb-text-main)_8%,transparent)] sm:w-[min(60vw,280px)] md:w-[min(28vw,320px)]"
-                  style={{
-                    opacity: loaded ? 1 : 0,
-                    transform: loaded ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
-                    transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
-                    transitionDelay: `${0.5 + index * 0.1}s`,
-                    border: `1px solid ${themeSurface(primaryColor, 0.2)}`,
-                  }}
-                >
-                  <div className="relative aspect-[4/5] w-full">
-                    <OptimizedImage
-                      src={img.imageUrl}
-                      alt={img.altText}
-                      fill
-                      className="object-cover"
-                      sizes={IMAGE_SIZES.galleryTile}
-                    />
-                  </div>
-                </article>
-              ))}
+        <div
+          className={SECTION.content}
+          style={{
+            opacity: loaded ? 1 : 0,
+            transform: loaded ? 'translateY(0)' : 'translateY(20px)',
+            transition: `opacity 0.8s ${EASE}, transform 0.8s ${EASE}`,
+            transitionDelay: '0.45s',
+          }}
+        >
+          <div className="relative">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex">
+                {loopSlides.map((img) => (
+                  <article
+                    key={img.id}
+                    className="relative mr-4 min-w-0 shrink-0 grow-0 basis-[min(78vw,280px)] overflow-hidden bg-[var(--wb-card-bg-light)] shadow-[0_16px_40px_color-mix(in_srgb,var(--wb-text-main)_8%,transparent)] sm:basis-[min(60vw,280px)] md:mr-6 md:basis-[min(28vw,320px)]"
+                    style={{ border: `1px solid ${borderColor}` }}
+                  >
+                    <div className="relative aspect-[4/5] w-full">
+                      <OptimizedImage
+                        src={img.imageUrl}
+                        alt={img.altText}
+                        fill
+                        className="object-cover"
+                        sizes={IMAGE_SIZES.galleryTile}
+                      />
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
+
+            {showControls && (
+              <div className="mt-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={scrollPrev}
+                    aria-label="Previous gallery images"
+                    className="inline-flex h-10 w-10 items-center justify-center border text-[var(--wb-text-main)] transition-colors hover:border-[var(--wb-primary)] hover:text-[var(--wb-primary)]"
+                    style={{ borderColor }}
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    onClick={scrollNext}
+                    aria-label="Next gallery images"
+                    className="inline-flex h-10 w-10 items-center justify-center border text-[var(--wb-text-main)] transition-colors hover:border-[var(--wb-primary)] hover:text-[var(--wb-primary)]"
+                    style={{ borderColor }}
+                  >
+                    →
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  {galleryImages.map((img, index) => (
+                    <button
+                      key={`dot-${img.id}`}
+                      type="button"
+                      aria-label={`Go to slide ${index + 1}`}
+                      aria-current={index === selectedIndex}
+                      onClick={() => scrollTo(index)}
+                      className="h-1.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: index === selectedIndex ? '1.25rem' : '0.375rem',
+                        backgroundColor:
+                          index === selectedIndex
+                            ? primaryColor
+                            : themeSurface(primaryColor, 0.28),
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 flex justify-end">
@@ -175,10 +286,6 @@ export function GallerySection({ gallerySection, className }: GallerySectionProp
               style={{
                 fontFamily: 'var(--wb-body-font, sans-serif)',
                 color: primaryColor,
-                opacity: loaded ? 1 : 0,
-                transform: loaded ? 'translateY(0)' : 'translateY(20px)',
-                transition: `opacity 0.6s ${EASE}, transform 0.6s ${EASE}`,
-                transitionDelay: '1s',
               }}
             >
               See More Work
