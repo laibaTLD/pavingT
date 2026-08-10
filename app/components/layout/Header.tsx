@@ -289,19 +289,13 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                             className="flex w-72 shrink-0 flex-col border-r"
                             style={{ borderColor: themeSurface(primaryColor, 0.12) }}
                           >
-                            <div className="flex items-baseline justify-between gap-2 px-4 pb-2 pt-3">
+                            <div className="px-4 pb-2 pt-3">
                               <p
                                 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--wb-text-secondary)]"
                                 style={{ fontFamily: WB.bodyFont }}
                               >
                                 Services
                               </p>
-                              <span
-                                className="text-[10px] tabular-nums text-[var(--wb-text-secondary)]"
-                                style={{ fontFamily: WB.bodyFont }}
-                              >
-                                {serviceMenu.length}
-                              </span>
                             </div>
                             <ul className="flex-1 overflow-y-auto pb-2">
                               {serviceMenu.map((svc) => {
@@ -326,9 +320,6 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                                         onClick={closeServices}
                                       >
                                         <span className="block truncate">{svc.label}</span>
-                                        <span className="mt-0.5 block text-[10px] tabular-nums opacity-60">
-                                          {svc.areas.length} area{svc.areas.length === 1 ? '' : 's'}
-                                        </span>
                                       </Link>
                                       {svc.areas.length > 0 && (
                                         <span
@@ -504,8 +495,8 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                         aria-expanded={mobileServicesOpen}
                       >
                         {item.label}
-                        <span className="text-sm tabular-nums" style={{ color: primaryColor }}>
-                          {mobileServicesOpen ? '−' : '+'} · {serviceMenu.length}
+                        <span className="text-sm" style={{ color: primaryColor }}>
+                          {mobileServicesOpen ? '−' : '+'}
                         </span>
                       </button>
 
@@ -527,9 +518,6 @@ export function Header({ businessName, themeData, phoneNumber }: HeaderProps) {
                                     style={{ fontFamily: WB.bodyFont }}
                                   >
                                     <span className="block">{svc.label}</span>
-                                    <span className="text-[10px] tabular-nums opacity-60">
-                                      {svc.areas.length} area{svc.areas.length === 1 ? '' : 's'}
-                                    </span>
                                   </Link>
                                   {svc.areas.length > 0 && (
                                     <button
