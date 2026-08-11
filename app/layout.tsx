@@ -8,10 +8,12 @@ import { LenisProvider } from '@/app/components/cinematic/LenisProvider'
 import { AmbientFoundation } from '@/app/components/cinematic/AmbientFoundation'
 import { HeroIntroProvider } from '@/app/providers/HeroIntroProvider'
 import { Header } from '@/app/components/layout/Header'
+import { GoogleAnalytics } from '@/app/components/analytics/GoogleAnalytics'
 import { fetchInitialSiteData } from '@/app/lib/serverSiteData'
 import {
   generateMetadata as buildMetadata,
   getSiteSeoData,
+  GOOGLE_SITE_VERIFICATION,
 } from '@/app/lib/metadata'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,6 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: 'Web Builder Site',
       description: 'Generated site using Web Builder',
+      verification: {
+        google: GOOGLE_SITE_VERIFICATION,
+      },
     }
   }
   return buildMetadata(getSiteSeoData(initialData.site), initialData.site)
@@ -35,6 +40,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning className="antialiased">
+        <GoogleAnalytics />
         <ErrorBoundary>
           <WebBuilderProvider initialData={initialData}>
             <LanguageProvider>
